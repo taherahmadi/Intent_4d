@@ -23,7 +23,7 @@ target_rad = 0.2;
 target_x = 0;
 target_y = 0;
 target_v = 0;
-target_phi = 0;
+target_phi = pi/10;
 
 dim = 4;
 Min = zeros(dim,1);
@@ -46,13 +46,13 @@ Max(3) = Max(3) - dx(3);
 [xs N] = gridGeneration(dim, Min, Max, dx);
 
 % initialization
-phi = 100*ones(N(1),N(2),N(3), N(4));
+phi = 10*ones(N(1),N(2),N(3), N(4));
 
 % Target init value = 0
 % phi(((xs(:,:,:,1) - target_x).^2 + (xs(:,:,:,2) - target_y).^2) <= target_rad^2) = 0;
 % change to circle 
-flag = sqrt((target_x - xs(:,:,:,:,1)).^2 + (target_y - xs(:,:,:,:,2)).^2) <= target_rad &...
-       abs(target_phi - xs(:,:,:,:,3)) <= target_rad;
+flag =     ((target_x - xs(:,:,:,:,1)).^2 + (target_y - xs(:,:,:,:,2)).^2) <= target_rad &...
+       abs(target_phi - xs(:,:,:,:,3)) <= target_phi;
    %        abs(target_rad - xs(:,:,:,:,3)) <= 0 &...
 phi(flag) = 0;
 
@@ -91,8 +91,17 @@ tic;
 mexLFsweep(phi,xs,dx,a_upper,a_lower,omega_max,numIter,TOL);
 toc;
 
+
 contour(xs(:,:,1,10,1),xs(:,:,1,10,2),phi(:,:,1,10), "ShowText", "on")
+xlabel('X')
+ylabel('Y')
 save('V.mat','phi')
 
+for i= 1:21
+    contour(xs(:,:,1,10,1),xs(:,:,1,10,2),phi(:,:,i,10), "ShowText", "on") 
+    xlabel('X')
+    ylabel('Y')
+%     saveas(gcf,['result/' num2str(i) '.png'])
+end
 
     

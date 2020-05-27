@@ -32,7 +32,7 @@ U=[u1 u2];
 
 % Find the discrete value of dynamic
 Xd = discrete(Xo,Precision');
-Xd(Xd<0) = 0;
+Xd(Xd<0) = 0;   
 ind = (Xd - Min)./Precision'+1;
 rdist = [1 1] - G(1:2); % considering (0,0) at origin
 relative_dist = (rdist - Min(1:2))./Precision(1:2)';
