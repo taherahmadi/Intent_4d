@@ -1,14 +1,15 @@
 clear;clc;close all
+
 xPrecision = [0.1,0.1,2*pi/20,0.1];
 [x,y] = meshgrid(0:xPrecision(1):2);
 load('V.mat');
 Min = [0,0,0,0];Precision =[0.1; 0.1; 2*pi/20; 0.1];
 
-
 alpha = 0:xPrecision(4):2*pi;
 v = 0:xPrecision(3):2;
 dt = 0.1;
 ph = 10;
+
 % u
 w = .7*[1;1;1;1;1;1;1;-2;-2;-4];
 w = 1.5*ones(10,1);
@@ -25,9 +26,9 @@ plot(x,y,'.')
 X0 = [0,0,0,0];
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
 Xshow(1,:) = discrete(X(1,:),xPrecision);
-for k=1:10
-X (k+1,:) = dynamic (X(k,:),a(k),w(k),dt)
-Xshow(k+1,:) = discrete(X(k+1,:),xPrecision)
+for k=1:10;
+X (k+1,:) = dynamic (X(k,:),a(k),w(k),dt);
+Xshow(k+1,:) = discrete(X(k+1,:),xPrecision);
 end
 hold on;scatter(Xshow(:,1),Xshow(:,2),'ro')
 figure;
@@ -47,10 +48,11 @@ P=zeros(L,10,2*2*2);
 Beta = [1 10];
 Gamma = [0.9 0.99];
 
-PBeta = (1/length(Beta))*ones(length(Beta)*length(G));
-PGamma = (1/length(Gamma))*ones(length(Gamma));
+PBeta = (1/size(Beta,2))*ones(size(Beta,2)*size(G,1),1)';
+PGamma = (1/size(Gamma,2))*ones(size(Gamma,2),1)';
+
 % weight of particles for goal position
-WG = (1/length(G))*ones(length(G));
+WG = (1/size(G,1))*ones(size(G,1),1,1);
 
 for k=1:10
     % prediction of u before observation
@@ -104,6 +106,7 @@ for k=1:10
     Pu1g2 = sum([P(ind,k,2) P(ind,k,6)].*[PGamma(1) PGamma(2)]*WG(2));
     Pu2g1 = sum([P(ind,k,3) P(ind,k,7)].*[PGamma(1) PGamma(2)]*WG(1));
     Pu2g2 = sum([P(ind,k,4) P(ind,k,8)].*[PGamma(1) PGamma(2)]*WG(2));
+   
     sm = sum(PBeta.*[Pu1g1 Pu1g2 Pu2g1 Pu2g2]);
     PBeta(1) = PBeta(1)*Pu1g1/(sm);
     PBeta(2) = PBeta(2)*Pu1g2/(sm);
@@ -124,6 +127,7 @@ for k=1:10
     
     
 end
+
 [~,i]=max(P(:,:,1));
 ff=U(i,:);
 subplot(211);plot(ff(:,1));
