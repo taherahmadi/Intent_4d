@@ -45,11 +45,13 @@ G = [G1;G2];
 L=length(Uw)*length(Ua);
 P=zeros(L,10,2*2*2);
 Beta = [1 10];
-PBeta = [0.5,0.5,0.5,0.5];
 Gamma = [0.9 0.99];
-PGamma = [0.5,0.5];
+
+PBeta = (1/length(Beta))*ones(length(Beta)*length(G));
+PGamma = (1/length(Gamma))*ones(length(Gamma));
 % weight of particles for goal position
-WG = [0.5,0.5];
+WG = (1/length(G))*ones(length(G));
+
 for k=1:10
     % prediction of u before observation
     for m=1:length(Beta)
@@ -59,9 +61,9 @@ for k=1:10
             for i=1:size(G,1)
                 G1 = G(i,:);
                % [Q,U] = evaluateQ(X(k,:),Uw,Ua,dt,G1,gamma);
-               [Q,U ] = evaluateQ2(phi,Min,Precision,X,Uw,Ua,dt,G(2,:),gamma);
+                [Q,U] = evaluateQ2(phi,Min,Precision,X,Uw,Ua,dt,G(2,:),gamma);
                 % i > m > n :MSB
-                P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta);
+                P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
             end
         end
     end
@@ -77,6 +79,8 @@ for k=1:10
         end
     end
     ind = ib(aa);
+    
+    
     % update gamma
     % Find the Q for the observed u
     [Q1,U1] = evaluateQ2(phi,Min,Precision,X(k,:),u(1),u(2),dt,G1,Gamma(1));

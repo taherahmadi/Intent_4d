@@ -31,14 +31,34 @@ U=[u1 u2];
 %Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
 
 % Find the discrete value of dynamic
-Xd = discrete(Xo,Precision');
-Xd(Xd<0) = 0;   
-ind = (Xd - Min)./Precision'+1;
-rdist = [1 1] - G(1:2); % considering (0,0) at origin
-relative_dist = (rdist - Min(1:2))./Precision(1:2)';
-Vs1 = V(int16(ind+[relative_dist 0 0]));
+% Xd = discrete(Xo,Precision');
+% Xd(Xd<0) = 0;   
+% ind = (Xd - Min)./Precision'+1;
+% rdist = [1 1] - G(1:2); % considering (0,0) at origin
+% relative_dist = (rdist - Min(1:2))./Precision(1:2)';
+% Vs1 = V(int16(ind+[relative_dist 0 0]));
+dim = 4;
+Min = zeros(dim,1);
+Max = zeros(dim,1);
+Min(1) = -1;
+Min(2) = -1;
+Min(3) = 0;
+Min(4) = 0;
+Max(1) = 1;
+Max(2) = 1;
+Max(3) = 2*pi;
+Max(4) = 2;
+dx = [0.1; 0.1; 2*pi/20; 0.1];
+
+x1 = Min(1):dx(1):Max(1);
+x2 = Min(2):dx(2):Max(2);
+x3 = Min(3):dx(3):Max(3)-dx(3);
+x4 = Min(4):dx(4):Max(4);
+
+Vs1 = interpn(x1, x2, x3, x4, V, Xo(:,1), Xo(:,2), Xo(:,3), Xo(:,4), 'nearest', 0);
+
 r = -dt;
-Qh = r*ones(L,1) - gamma* Vs1; % converting TTR to RL (NTTR) 
+Qh = r*ones(L,1) - gamma* Vs1; % converting TTR to RL (NTTR)
 
 end
 

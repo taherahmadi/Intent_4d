@@ -96,12 +96,4 @@ contour(xs(:,:,1,10,1),xs(:,:,1,10,2),phi(:,:,1,10), "ShowText", "on")
 xlabel('X')
 ylabel('Y')
 save('V.mat','phi')
-
-for i= 1:21
-    contour(xs(:,:,1,10,1),xs(:,:,1,10,2),phi(:,:,i,10), "ShowText", "on") 
-    xlabel('X')
-    ylabel('Y')
-%     saveas(gcf,['result/' num2str(i) '.png'])
-end
-
     
