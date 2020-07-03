@@ -23,7 +23,7 @@ target_rad = 0.2;
 target_x = 0;
 target_y = 0;
 target_v = 0;
-target_phi = pi/10;
+target_phi = 0;
 
 dim = 4;
 Min = zeros(dim,1);

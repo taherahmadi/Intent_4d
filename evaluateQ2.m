@@ -10,16 +10,27 @@ yo = y + v*sin(alpha)*dt;
 alphao = alpha+ Uw'*dt;
 vo = v+ Ua'*dt ;
 
+
 L=length(Uw)*length(Ua);
 p = meshgrid(alphao,vo);
 p=reshape(p',[L,1]);
 q = meshgrid(vo,alphao);
 q=reshape(q,[L,1]);
 
+% consider the human only moves along heading (no negative v,q)
+p(q<0)=pi+p(q<0);
+p(p>2*pi)=p(p>2*pi)-2*pi;
+q(q<0)=-q(q<0);
+
+
+% next state
 xoo = xo*ones(L,1) + q.*cos(p)*dt;
 yoo = yo*ones(L,1) + q.*sin(p)*dt;
 Xo = [xo*ones(L,1),yo*ones(L,1),p,q];
 Xoo = [xoo,yoo,p,q];
+
+
+
 
 
 u1 = meshgrid(Uw,Ua);
@@ -54,6 +65,14 @@ x1 = Min(1):dx(1):Max(1);
 x2 = Min(2):dx(2):Max(2);
 x3 = Min(3):dx(3):Max(3)-dx(3);
 x4 = Min(4):dx(4):Max(4);
+
+% apply the translation and rotation due to goal change
+Xo(:,3) = Xo(:,3)-G(3);
+% check rotation sign
+Xor = [cos(G(3)) sin(G(3));-sin(G(3)) cos(G(3))]*([Xo(:,1)-G(1) Xo(:,2)-G(2)])';
+Xo(:,1) = (Xor(1,:))';
+Xo(:,2) = (Xor(2,:))';
+% discount V before (geometric series)
 
 Vs1 = interpn(x1, x2, x3, x4, V, Xo(:,1), Xo(:,2), Xo(:,3), Xo(:,4), 'nearest', 0);
 
