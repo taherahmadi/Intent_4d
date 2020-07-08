@@ -46,7 +46,7 @@ G = [G1;G2];
 %% start
 L=length(Uw)*length(Ua);
 Beta = [0.1; 100];
-Gamma = [0.9 ;0.99];
+Gamma = [0.009 ;0.99];
 
 PBeta = (1/size(Beta,1)/size(G,1))*ones(size(Beta,1)*size(G,1),1)';
 PGamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
@@ -196,13 +196,13 @@ ylabel('Beta = 1, G= g1')
 subplot(222);plot(PB(:,2))
 ylabel('Beta = 1, G= g2')
 subplot(223);plot(PB(:,3))
-ylabel('Beta = 10, G= g1')
+ylabel('Beta = 100, G= g1')
 subplot(224);plot(PB(:,4))
-ylabel('Beta = 10, G= g2')
+ylabel('Beta = 100, G= g2')
 
 figure;
 subplot(211);plot(PG(:,1))
-ylabel('gamma = 0.9')
+ylabel('gamma = 0.009')
 title('Probability of Gamma')
 subplot(212);plot(PG(:,2))
 ylabel('gamma = 0.99')
