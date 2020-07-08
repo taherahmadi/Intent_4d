@@ -20,6 +20,11 @@ uPrecision = [0.1,1];
 Uw = -3:uPrecision(1):3;
 Ua = -15:uPrecision(2):10;
 
+% reduced size of possible input
+uPrecision = [0.5,5];
+Uw = -2:uPrecision(1):2;
+Ua = -15:uPrecision(2):10;
+
 
 plot(x,y,'.')
 
@@ -54,7 +59,11 @@ PGamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
 % weight of particles for goal position
 WG = (1/size(G,1))*ones(size(G,1),1,1);
 
+
+
 P=zeros(L,Tf,size(Gamma,1),size(Beta,1),size(G,1));
+PX = zeros(Tf,L);
+Xp = zeros(L,4,Tf);
 % showing results
 PB(1,:) = PBeta;
 PG(1,:) = PGamma;
@@ -78,8 +87,12 @@ for k=1:Tf
     
     % update parameters after observing u
     u = [w(k),a(k)];
-    ia = find(U(:,1)==w(k));
-    ib = find(U(:,2)==a(k));
+%     ia = find(U(:,1)==w(k));
+%     ib = find(U(:,2)==a(k));
+    % if the actual u is not in the control samples find nearest
+    ia = find(min(abs(U(:,1)-w(k)))==abs(U(:,1)-w(k)));
+    ib = find(min(abs(U(:,2)-a(k)))==abs(U(:,2)-a(k)));
+    
     for t=1:length(ia)
         aa=find(ib==ia(t));
         if(~isempty(aa))
@@ -160,18 +173,23 @@ for k=1:Tf
     
     % expected position in 1 step ahead (dynamic)
     % not biased :: learning rules of movement rather than dynamic
-    Xp = dynamic(X(k,:),U(:,2),U(:,1),dt);
-    Pt = ones(size(PG,2),size(PB,2),size(PW,2));
+    Xp(:,:,k) = twostepdynamic(X(k,:),U(:,2),U(:,1),dt);
+    Pt = ones(size(Gamma,1),size(Beta,1),size(G,1));
     Pt(1,:,:) = Pt(1,:,:)*PG(k+1,1);
     Pt(2,:,:) = Pt(2,:,:)*PG(k+1,2);
-    Pt(:,1,:) = Pt(:,1,:)*PB(k+1,1);
-    Pt(:,2,:) = Pt(:,2,:)*PB(k+1,2);
-    Pt(:,3,:) = Pt(:,3,:)*PB(k+1,3);
-    Pt(:,4,:) = Pt(:,4,:)*PB(k+1,4);
+    Pt(:,1,:) = Pt(:,1,:)*(PB(k+1,1)+PB(k+1,2));
+    Pt(:,2,:) = Pt(:,2,:)*(PB(k+1,3)+PB(k+1,4));
+%     Pt(:,3,:) = Pt(:,3,:)*PB(k+1,3);
+%     Pt(:,4,:) = Pt(:,4,:)*PB(k+1,4);
     Pt(:,:,1) = Pt(:,:,1)*PW(k+1,1);
     Pt(:,:,2) = Pt(:,:,2)*PW(k+1,2);
-%     PXp = P(:,k,:,:,:).*Pt;
-%     PXp =sum(sum(sum(PXp,3),4),5);
+
+    PXp = ones(size(P));
+    for jj =1:size(P,1)
+        PXp(jj,k,:,:,:) = Pt; 
+    end
+    PXp(:,k,:,:,:) = P(:,k,:,:,:).*PXp(:,k,:,:,:);
+    PX(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
 %     % mean
 %     XP_mean = sum(Xp.*PXp,'all');
 end
@@ -214,3 +232,15 @@ title('Goal Probability')
 subplot(212);plot(PW(:,2))
 ylabel('Goal 2 ')
 
+h = figure;
+for t=1:Tf
+    hold on;
+    Xp1 = reshape(Xp(:,1,t),[length(Uw),length(Ua)]);
+    Xp2 = reshape(Xp(:,2,t),[length(Uw),length(Ua)]);
+    PXt = reshape(PX(t,:),[length(Uw),length(Ua)]);
+    surf(Xp1,Xp2,PXt);
+end
+view(2);
+hold on;plot(Xshow(:,1),Xshow(:,2),'r','LineWidth',2);
+hold on;scatter(Xshow(:,1),Xshow(:,2),50,'ro','LineWidth',2);
+grid;
