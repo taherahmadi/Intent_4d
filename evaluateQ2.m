@@ -59,7 +59,7 @@ Max(1) = 1;
 Max(2) = 1;
 Max(3) = 2*pi;
 Max(4) = 2;
-dx = [0.1; 0.1; 2*pi/20; 0.1];
+dx = [0.05; 0.05; 2*pi/20; 0.1];
 
 x1 = Min(1):dx(1):Max(1);
 x2 = Min(2):dx(2):Max(2);
@@ -75,6 +75,7 @@ Xo(:,2) = (Xor(2,:))';
 % discount V before (geometric series)
 
 Vs1 = interpn(x1, x2, x3, x4, V, Xo(:,1), Xo(:,2), Xo(:,3), Xo(:,4), 'nearest', 0);
+
 
 r = -dt;
 Qh = r*ones(L,1) - gamma* Vs1; % converting TTR to RL (NTTR)

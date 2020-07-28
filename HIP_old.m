@@ -25,6 +25,7 @@ uPrecision = [0.5,5];
 Uw = -2:uPrecision(1):2;
 Ua = -15:uPrecision(2):10;
 
+
 plot(x,y,'.')
 
 %% Dynamic
@@ -43,32 +44,30 @@ figure;
 % G1 = [2,0.8,0,0];
 % G2 = [0,2,0,0];
 % G3 = [1,0,0,0];
-G1 = [1.3, 1.7, 1.6, 0];
-G2 = [0.9, 0, 0, 0];
-G3 = [1, 0.9, 0, 0];
-G4 = [0.9, 0.9, 0, 0];
-G5 = [0, 0, 0, 0];
-
-G = [G1;G2;G3;G4];
+G1 = [1.3000    1.7000    1.6000         0];
+G2 = [1,1,0,0];
+G = [G1;G2];
 
 %% start
 L=length(Uw)*length(Ua);
 Beta = [0.1; 100];
 Gamma = [0.009 ;0.99];
 
-PBeta = (1/size(Beta,1))*ones(size(Beta,1),1)';
+PBeta = (1/size(Beta,1)/size(G,1))*ones(size(Beta,1)*size(G,1),1)';
 PGamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
 
 % weight of particles for goal position
-PGoal = (1/size(G,1))*ones(size(G,1),1,1);
+WG = (1/size(G,1))*ones(size(G,1),1,1);
 
-Pu=zeros(L,Tf,size(Gamma,1),size(Beta,1),size(G,1));
+
+
+P=zeros(L,Tf,size(Gamma,1),size(Beta,1),size(G,1));
 PX = zeros(Tf,L);
 Xp = zeros(L,4,Tf);
 % showing results
-PBt(1,:) = PBeta;
-PGt(1,:) = PGamma;
-PWt(1,:) = PGoal; 
+PB(1,:) = PBeta;
+PG(1,:) = PGamma;
+PW(1,:) = WG; 
 
 for k=1:Tf
     % prediction of u before observation
@@ -81,7 +80,7 @@ for k=1:Tf
                 [Q,U] = evaluateQ2(phi,Min,Precision,X,Uw,Ua,dt,G(i,:),gamma);
                 % i > m > n :MSB
                 %^P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
-                Pu(:,k,n,m,i) = evaluateP(Q,beta);
+                P(:,k,n,m,i) = evaluateP(Q,beta);
             end
         end
     end
@@ -114,23 +113,19 @@ for k=1:Tf
 %     Pu2 = sum([P(ind,k,5) P(ind,k,6) P(ind,k,7) P(ind,k,8)].*PP);
 %     PGamma(1) = PGamma(1)*Pu1/(PGamma(1)*Pu1+PGamma(2)*Pu2);
 %     PGamma(2) = PGamma(2)*Pu2/(PGamma(1)*Pu1+PGamma(2)*Pu2);
- 
-    PG = zeros(length(Gamma),1);
-    for gamma=1:length(Gamma)
-        PG(gamma) = sum(sum(Pu(ind,k,gamma,:,:))); %+Pu(ind,k,gamma,2,1)+Pu(ind,k,gamma,1,2)+Pu(ind,k,gamma,2,2);
-        % filter role
-        PGamma(gamma) = PGamma(gamma)*PG(gamma);
-    end
     
+    PG1 = P(ind,k,1,1,1)+P(ind,k,1,2,1)+P(ind,k,1,1,2)+P(ind,k,1,2,2);
+    PG2 = P(ind,k,2,1,1)+P(ind,k,2,2,1)+P(ind,k,2,1,2)+P(ind,k,2,2,2);
+    % filter role
+    PGamma(1) = PGamma(1)*PG1;
+    PGamma(2) = PGamma(2)*PG2;
     % normalization
     SUM = sum(PGamma);
     PGamma = PGamma/SUM;
+    % save purpose only
+    PG(k+1,1) = PGamma(1);
+    PG(k+1,2) = PGamma(2);
     
-    for gamma=1:length(Gamma)
-        % multi purpose only
-        PGt(k+1,gamma) = PGamma(gamma);
-    end
- 
     % update beta
     % Find the Q for the observed u
 %     [Q1,U1] = evaluateQ2(phi,Min,Precision, X(k,:),u(1),u(2),dt,G1,Gamma(1));
@@ -141,121 +136,101 @@ for k=1:Tf
 %     Pb2g1 = sum([P(ind,k,3) P(ind,k,7)].*[PGamma(1) PGamma(2)]*WG(1));
 %     Pb2g2 = sum([P(ind,k,4) P(ind,k,8)].*[PGamma(1) PGamma(2)]*WG(2));
 %      sm = sum(PBeta.*[Pb1g1 P1g2 Pb2g1 Pb2g2]);
-    
-    Pbg = zeros(length(Beta) , size(G,1));    
-    for goal=1:size(G,1)
-        for beta=1:length(Beta)
-            for gamma=1:length(Gamma)
-                Pbg(beta, goal) = Pbg(beta, goal) + Pu(ind,k,gamma,beta,goal)*PGamma(gamma);
-            end
-        end
-    end
-%     Pb1g1 = P(ind,k,1,1,1)+P(ind,k,2,1,1);
-%     Pb1g2 = P(ind,k,1,1,2)+P(ind,k,2,1,2);
-%     Pb2g1 = P(ind,k,1,2,1)+P(ind,k,2,2,1);
-%     Pb2g2 = P(ind,k,1,2,2)+P(ind,k,2,2,2);
-    
-    for beta=1:length(Beta)
-        % filtering role
-        PBeta(beta) = PBeta(beta)*sum(Pbg(beta,:));
-    end
-    
-%     PBeta(1) = PBeta(1)*Pb1g1;
-%     PBeta(2) = PBeta(2)*Pb1g2;
-%     PBeta(3) = PBeta(3)*Pb2g1;
-%     PBeta(4) = PBeta(4)*Pb2g2;
-    
+
+
+    Pb1g1 = P(ind,k,1,1,1)+P(ind,k,2,1,1);
+    Pb1g2 = P(ind,k,1,1,2)+P(ind,k,2,1,2);
+    Pb2g1 = P(ind,k,1,2,1)+P(ind,k,2,2,1);
+    Pb2g2 = P(ind,k,1,2,2)+P(ind,k,2,2,2);
+    % filtering role
+    PBeta(1) = PBeta(1)*Pb1g1;
+    PBeta(2) = PBeta(2)*Pb1g2;
+    PBeta(3) = PBeta(3)*Pb2g1;
+    PBeta(4) = PBeta(4)*Pb2g2;
     % normalization
     sm = sum(PBeta);
     PBeta = PBeta/sm;
   
     
     % save purpose only
-    for beta=1:length(Beta)
-        PBt(k+1,beta) = PBeta(beta);
-    end
+    PB(k+1,1) = PBeta(1);
+    PB(k+1,2) = PBeta(2);
+    PB(k+1,3) = PBeta(3);
+    PB(k+1,4) = PBeta(4);
     
     % update g
-    for goal=1:size(PGoal,1)
-        PGoal(goal) = PGoal(goal)*sum(Pbg(:, goal));
-    end
-    
+    WG(1) = PBeta(1)+PBeta(3);
+    WG(2) = PBeta(2)+PBeta(4);
     % normalize 
-    sm = sum(PGoal);
-    PGoal = PGoal./sm;
+    sm = sum(WG);
+    WG(1) = WG(1)/sm;
+    WG(2) = WG(2)/sm;
     
     % save purpose only
-    for goal=1:size(PGoal,1)
-        PWt(k+1,goal) = PGoal(goal);
-    end
+    PW(k+1,1) = WG(1);
+    PW(k+1,2) = WG(2);
     % new goal sampling from goal distribution
     
     % expected position in 1 step ahead (dynamic)
     % not biased :: learning rules of movement rather than dynamic
     Xp(:,:,k) = twostepdynamic(X(k,:),U(:,2),U(:,1),dt);
     Pt = ones(size(Gamma,1),size(Beta,1),size(G,1));
-    for gamma=1:size(Gamma,1)
-        Pt(gamma,:,:) = Pt(gamma,:,:)*PGt(k+1,gamma);
-    end    
-    for beta=1:size(Beta,1)
-        Pt(:,beta,:) = Pt(:,beta,:)*PBt(k+1,beta);
-    end
-    for goal=1:size(G,1)
-        Pt(:,:,goal) = Pt(:,:,goal)*PWt(k+1,goal);
-    end
-    
-    PXp = ones(size(Pu));
-    for jj =1:size(Pu,1)
+    Pt(1,:,:) = Pt(1,:,:)*PG(k+1,1);
+    Pt(2,:,:) = Pt(2,:,:)*PG(k+1,2);
+    Pt(:,1,:) = Pt(:,1,:)*(PB(k+1,1)+PB(k+1,2));
+    Pt(:,2,:) = Pt(:,2,:)*(PB(k+1,3)+PB(k+1,4));
+%     Pt(:,3,:) = Pt(:,3,:)*PB(k+1,3);
+%     Pt(:,4,:) = Pt(:,4,:)*PB(k+1,4);
+    Pt(:,:,1) = Pt(:,:,1)*PW(k+1,1);
+    Pt(:,:,2) = Pt(:,:,2)*PW(k+1,2);
+
+    PXp = ones(size(P));
+    for jj =1:size(P,1)
         PXp(jj,k,:,:,:) = Pt; 
     end
-    PXp(:,k,:,:,:) = Pu(:,k,:,:,:).*PXp(:,k,:,:,:);
+    PXp(:,k,:,:,:) = P(:,k,:,:,:).*PXp(:,k,:,:,:);
     PX(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
 %     % mean
 %     XP_mean = sum(Xp.*PXp,'all');
 end
 
-
-[~,i]=max(Pu(:,:,1));
+[~,i]=max(P(:,:,1));
 ff=U(i,:);
 subplot(211);plot(ff(:,1));
 hold on; plot(w,'r');
 subplot(212);plot(ff(:,2));
 hold on; plot(a,'r');
 figure;
-[~,i]=max(Pu(:,:,2));
+[~,i]=max(P(:,:,2));
 ff=U(i,:);
 subplot(211);plot(ff(:,1));
 hold on; plot(w,'r');
 subplot(212);plot(ff(:,2));
 hold on; plot(a,'r');
 figure;
-
-subplot(221);plot(PBt(:,1))
+subplot(221);plot(PB(:,1))
 title('Probability of Beta')
-ylabel('Beta = 1')
-subplot(222);plot(PBt(:,2))
-ylabel('Beta = 10')
+ylabel('Beta = 1, G= g1')
+subplot(222);plot(PB(:,2))
+ylabel('Beta = 1, G= g2')
+subplot(223);plot(PB(:,3))
+ylabel('Beta = 100, G= g1')
+subplot(224);plot(PB(:,4))
+ylabel('Beta = 100, G= g2')
 
 figure;
-subplot(211);plot(PGt(:,1))
+subplot(211);plot(PG(:,1))
 ylabel('gamma = 0.009')
 title('Probability of Gamma')
-subplot(212);plot(PGt(:,2))
+subplot(212);plot(PG(:,2))
 ylabel('gamma = 0.99')
 
 figure;
-subplot(511);plot(PWt(:,1))
+subplot(211);plot(PW(:,1))
 ylabel('Goal 1 ')
 title('Goal Probability')
-subplot(512);plot(PWt(:,2))
+subplot(212);plot(PW(:,2))
 ylabel('Goal 2 ')
-subplot(513);plot(PWt(:,3))
-ylabel('Goal 3 ')
-subplot(514);plot(PWt(:,4))
-ylabel('Goal 4 ')
-subplot(515);plot(PWt(:,4))
-ylabel('Goal 5 ')
-
 
 h = figure;
 for t=1:Tf
@@ -263,13 +238,7 @@ for t=1:Tf
     Xp1 = reshape(Xp(:,1,t),[length(Uw),length(Ua)]);
     Xp2 = reshape(Xp(:,2,t),[length(Uw),length(Ua)]);
     PXt = reshape(PX(t,:),[length(Uw),length(Ua)]);
-    surf(Xp1,Xp2,10*log10(PXt));
-  
-   newmap = jet;                    %starting map
-ncol = size(newmap,1);           %how big is it?
-zpos = 1 + floor(2/3 * ncol);    %2/3 of way through
-newmap(zpos,:) = [1 1 1];        %set that position to white
-colormap(newmap); 
+    surf(Xp1,Xp2,PXt);
 end
 view(2);
 hold on;plot(Xshow(:,1),Xshow(:,2),'r','LineWidth',2);

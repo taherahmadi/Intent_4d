@@ -19,7 +19,7 @@ a_upper = 10; a_lower = -15;
 omega_max = 3;
 
 % target setting
-target_rad = 0.2;
+target_rad = 0.01;
 target_x = 0;
 target_y = 0;
 target_v = 0;
@@ -39,7 +39,7 @@ Max(4) = 2;
 
 % dx = [0.1; 0.1; 2*pi/100];
 % dimension will be 41x41x40
-dx = [0.1; 0.1; 2*pi/20; 0.1];
+dx = [0.05; 0.05; 2*pi/20; 0.1];
 % dx = [0.05; 0.05; 2*pi/40];
 Max(3) = Max(3) - dx(3);
 
