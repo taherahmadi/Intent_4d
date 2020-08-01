@@ -25,9 +25,9 @@ uPrecision = [0.5,5];
 Uw = -2:uPrecision(1):2;
 Ua = -15:uPrecision(2):10;
 
-plot(x,y,'.')
+% plot(x,y,'.')
 
-%% Dynamic
+% Dynamic
 X0 = [0,0,0,0];
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
 Xshow(1,:) = discrete(X(1,:),xPrecision);
@@ -35,22 +35,32 @@ for k=1:Tf
 X (k+1,:) = dynamic (X(k,:),a(k),w(k),dt);
 Xshow(k+1,:) = discrete(X(k+1,:),xPrecision);
 end
-hold on;scatter(Xshow(:,1),Xshow(:,2),'ro')
-figure;
+% hold on;scatter(Xshow(:,1),Xshow(:,2),'ro')
+% figure;
 
 %% Goal (from PF)
 % [x,y,alpha,v]
 % G1 = [2,0.8,0,0];
 % G2 = [0,2,0,0];
 % G3 = [1,0,0,0];
+
 G1 = [1.3, 1.7, 1.6, 0];
-G2 = [0.9, 0, 0, 0];
-G3 = [1, 0.9, 0, 0];
-G4 = [0.9, 0.9, 0, 0];
-G5 = [0, 0, 0, 0];
+% G2 = [0.9, 0, 0, 0];
+% G3 = [1, 0.9, 0, 0];
+% G4 = [1.9, 1.9, 0, 0];
+% G5 = [0.1, 0.1, 0, 0];
+% G6 = [0.1, 1.9, 1.6, 0];
+% G7 = [1.9, 0.1, 0, 0];
+% G8 = [1, 1.9, 1.4, 1];
+% G9 = [1.9, 0.3, 0, 1];
+% 
+% G = [G1;G2;G3;G4;G5;G6;G7;G8;G9];
 
-G = [G1;G2;G3;G4];
-
+n = 9;
+xmin=0;
+xmax=2;
+G=xmin+rand(n,4)*(xmax-xmin);
+G(1,:) = G1;
 %% start
 L=length(Uw)*length(Ua);
 Beta = [0.1; 100];
@@ -71,6 +81,7 @@ PGt(1,:) = PGamma;
 PWt(1,:) = PGoal; 
 
 for k=1:Tf
+    
     % prediction of u before observation
     for m=1:length(Beta)
         beta = Beta(m);
@@ -184,6 +195,22 @@ for k=1:Tf
     sm = sum(PGoal);
     PGoal = PGoal./sm;
     
+%     G(:,1:2) = G(:,1:2) .* PGoal 
+%     G(:,1:2) = xmin+G(:,1:2)*(xmax-xmin)
+    
+%     v1 = std(G(:,1),PGoal)
+%     m1 = sum(PGoal.*G(:,1))/sum(PGoal)
+%     pd1 = makedist('normal','mu',m1,'sigma',v1);
+%     
+%     v2 = std(G(:,1),PGoal*100)
+%     m2 = sum((PGoal*100).*G(:,2))/sum(PGoal*100)    
+%     pd2 = makedist('normal','mu',m2,'sigma',v2);
+%     
+%     x_values = 1:9;
+%     G(:,1) = pdf(pd1,x_values)
+%     G(:,2) = pdf(pd2,x_values)
+
+    
     % save purpose only
     for goal=1:size(PGoal,1)
         PWt(k+1,goal) = PGoal(goal);
@@ -212,66 +239,88 @@ for k=1:Tf
     PX(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
 %     % mean
 %     XP_mean = sum(Xp.*PXp,'all');
+
+    
 end
 
 
-[~,i]=max(Pu(:,:,1));
-ff=U(i,:);
-subplot(211);plot(ff(:,1));
-hold on; plot(w,'r');
-subplot(212);plot(ff(:,2));
-hold on; plot(a,'r');
+% [~,i]=max(Pu(:,:,1));
+% ff=U(i,:);
+% subplot(211);plot(ff(:,1));
+% hold on; plot(w,'r');
+% subplot(212);plot(ff(:,2));
+% hold on; plot(a,'r');
+% figure;
+% 
+% [~,i]=max(Pu(:,:,2));
+% ff=U(i,:);
+% subplot(211);plot(ff(:,1));
+% hold on; plot(w,'r');
+% subplot(212);plot(ff(:,2));
+% hold on; plot(a,'r');
+% figure;
+% 
+% subplot(221);plot(PBt(:,1))
+% title('Probability of Beta')
+% ylabel('Beta = 1')
+% subplot(222);plot(PBt(:,2))
+% ylabel('Beta = 10')
+% 
+% figure;
+% subplot(211);plot(PGt(:,1))
+% ylabel('gamma = 0.009')
+% title('Probability of Gamma')
+% subplot(212);plot(PGt(:,2))
+% ylabel('gamma = 0.99')
+% 
 figure;
-[~,i]=max(Pu(:,:,2));
-ff=U(i,:);
-subplot(211);plot(ff(:,1));
-hold on; plot(w,'r');
-subplot(212);plot(ff(:,2));
-hold on; plot(a,'r');
-figure;
-
-subplot(221);plot(PBt(:,1))
-title('Probability of Beta')
-ylabel('Beta = 1')
-subplot(222);plot(PBt(:,2))
-ylabel('Beta = 10')
-
-figure;
-subplot(211);plot(PGt(:,1))
-ylabel('gamma = 0.009')
-title('Probability of Gamma')
-subplot(212);plot(PGt(:,2))
-ylabel('gamma = 0.99')
-
-figure;
-subplot(511);plot(PWt(:,1))
+subplot(911);plot(PWt(:,1))
 ylabel('Goal 1 ')
 title('Goal Probability')
-subplot(512);plot(PWt(:,2))
+subplot(912);plot(PWt(:,2))
 ylabel('Goal 2 ')
-subplot(513);plot(PWt(:,3))
+subplot(913);plot(PWt(:,3))
 ylabel('Goal 3 ')
-subplot(514);plot(PWt(:,4))
+subplot(914);plot(PWt(:,4))
 ylabel('Goal 4 ')
-subplot(515);plot(PWt(:,4))
+subplot(915);plot(PWt(:,5))
 ylabel('Goal 5 ')
 
+subplot(916);plot(PWt(:,6))
+ylabel('Goal 6 ')
+subplot(917);plot(PWt(:,7))
+ylabel('Goal 7 ')
+subplot(918);plot(PWt(:,8))
+ylabel('Goal 8 ')
+subplot(919);plot(PWt(:,9))
+ylabel('Goal 9 ')
 
-h = figure;
-for t=1:Tf
-    hold on;
-    Xp1 = reshape(Xp(:,1,t),[length(Uw),length(Ua)]);
-    Xp2 = reshape(Xp(:,2,t),[length(Uw),length(Ua)]);
-    PXt = reshape(PX(t,:),[length(Uw),length(Ua)]);
-    surf(Xp1,Xp2,10*log10(PXt));
-  
-   newmap = jet;                    %starting map
-ncol = size(newmap,1);           %how big is it?
-zpos = 1 + floor(2/3 * ncol);    %2/3 of way through
-newmap(zpos,:) = [1 1 1];        %set that position to white
-colormap(newmap); 
-end
+
+% h = figure;
+% for t=1:Tf
+%     hold on;
+%     Xp1 = reshape(Xp(:,1,t),[length(Uw),length(Ua)]);
+%     Xp2 = reshape(Xp(:,2,t),[length(Uw),length(Ua)]);
+%     PXt = reshape(PX(t,:),[length(Uw),length(Ua)]);
+%     surf(Xp1,Xp2,10*log10(PXt));
+%   
+%    newmap = jet;                    %starting map
+% ncol = size(newmap,1);           %how big is it?
+% zpos = 1 + floor(2/3 * ncol);    %2/3 of way through
+% newmap(zpos,:) = [1 1 1];        %set that position to white
+% colormap(newmap); 
+% end
+figure;
 view(2);
 hold on;plot(Xshow(:,1),Xshow(:,2),'r','LineWidth',2);
 hold on;scatter(Xshow(:,1),Xshow(:,2),50,'ro','LineWidth',2);
+
+hold on;scatter(G(1,1),G(1,2),50,'go','LineWidth',8);
+text(G(1,1),G(1,2), 'G1', 'Fontsize', 10);
+
+for i=2:length(G)
+hold on;scatter(G(i,1),G(i,2),50,'yo','LineWidth',8);
+text(G(i,1),G(i,2), 'G'+string(i), 'Fontsize', 10);    
+end
+
 grid;
