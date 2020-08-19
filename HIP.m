@@ -31,7 +31,7 @@ Ua = -15:uPrecision(2):10;
 X0 = [0,0,0,0];
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
 Xshow(1,:) = discrete(X(1,:),xPrecision);
-for k=1:Tf
+for k=1:Tf-1
 X (k+1,:) = dynamic (X(k,:),a(k),w(k),dt);
 Xshow(k+1,:) = discrete(X(k+1,:),xPrecision);
 end
@@ -56,7 +56,7 @@ G1 = [1.3, 1.7, 1.6, 0];
 % 
 % G = [G1;G2;G3;G4;G5;G6;G7;G8;G9];
 
-n = 9;
+n = 5;
 xmin=0;
 xmax=2;
 G=xmin+rand(n,4)*(xmax-xmin);
@@ -89,7 +89,7 @@ for k=1:Tf
             gamma = Gamma(n);
             for i=1:size(G,1)
                % [Q,U] = evaluateQ(X(k,:),Uw,Ua,dt,G1,gamma);
-                [Q,U] = evaluateQ2(phi,Min,Precision,X,Uw,Ua,dt,G(i,:),gamma);
+                [Q,U] = evaluateQ2(phi,Min,Precision,X(k,:),Uw,Ua,dt,G(i,:),gamma);
                 % i > m > n :MSB
                 %^P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
                 Pu(:,k,n,m,i) = evaluateP(Q,beta);
@@ -244,35 +244,35 @@ for k=1:Tf
 end
 
 
-% [~,i]=max(Pu(:,:,1));
-% ff=U(i,:);
-% subplot(211);plot(ff(:,1));
-% hold on; plot(w,'r');
-% subplot(212);plot(ff(:,2));
-% hold on; plot(a,'r');
-% figure;
-% 
-% [~,i]=max(Pu(:,:,2));
-% ff=U(i,:);
-% subplot(211);plot(ff(:,1));
-% hold on; plot(w,'r');
-% subplot(212);plot(ff(:,2));
-% hold on; plot(a,'r');
-% figure;
-% 
-% subplot(221);plot(PBt(:,1))
-% title('Probability of Beta')
-% ylabel('Beta = 1')
-% subplot(222);plot(PBt(:,2))
-% ylabel('Beta = 10')
-% 
-% figure;
-% subplot(211);plot(PGt(:,1))
-% ylabel('gamma = 0.009')
-% title('Probability of Gamma')
-% subplot(212);plot(PGt(:,2))
-% ylabel('gamma = 0.99')
-% 
+[~,i]=max(Pu(:,:,1,1,1));
+ff=U(i,:);
+subplot(211);plot(ff(:,1));
+hold on; plot(w,'r');
+subplot(212);plot(ff(:,2));
+hold on; plot(a,'r');
+figure;
+
+[~,i]=max(Pu(:,:,2));
+ff=U(i,:);
+subplot(211);plot(ff(:,1));
+hold on; plot(w,'r');
+subplot(212);plot(ff(:,2));
+hold on; plot(a,'r');
+figure;
+
+subplot(221);plot(PBt(:,1))
+title('Probability of Beta')
+ylabel('Beta = 1')
+subplot(222);plot(PBt(:,2))
+ylabel('Beta = 10')
+
+figure;
+subplot(211);plot(PGt(:,1))
+ylabel('gamma = 0.009')
+title('Probability of Gamma')
+subplot(212);plot(PGt(:,2))
+ylabel('gamma = 0.99')
+
 figure;
 subplot(911);plot(PWt(:,1))
 ylabel('Goal 1 ')
@@ -286,14 +286,14 @@ ylabel('Goal 4 ')
 subplot(915);plot(PWt(:,5))
 ylabel('Goal 5 ')
 
-subplot(916);plot(PWt(:,6))
-ylabel('Goal 6 ')
-subplot(917);plot(PWt(:,7))
-ylabel('Goal 7 ')
-subplot(918);plot(PWt(:,8))
-ylabel('Goal 8 ')
-subplot(919);plot(PWt(:,9))
-ylabel('Goal 9 ')
+% subplot(916);plot(PWt(:,6))
+% ylabel('Goal 6 ')
+% subplot(917);plot(PWt(:,7))
+% ylabel('Goal 7 ')
+% subplot(918);plot(PWt(:,8))
+% ylabel('Goal 8 ')
+% subplot(919);plot(PWt(:,9))
+% ylabel('Goal 9 ')
 
 
 % h = figure;

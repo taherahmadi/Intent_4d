@@ -26,7 +26,7 @@ q(q<0)=-q(q<0);
 % next state
 xoo = xo*ones(L,1) + q.*cos(p)*dt;
 yoo = yo*ones(L,1) + q.*sin(p)*dt;
-Xo = [xo*ones(L,1),yo*ones(L,1),p,q];
+Xo = [xo*ones(L,1), yo*ones(L,1),p,q];
 Xoo = [xoo,yoo,p,q];
 
 
@@ -69,16 +69,19 @@ x4 = Min(4):dx(4):Max(4);
 % apply the translation and rotation due to goal change
 Xo(:,3) = Xo(:,3)-G(3);
 % check rotation sign
-Xor = [cos(G(3)) sin(G(3));-sin(G(3)) cos(G(3))]*([Xo(:,1)-G(1) Xo(:,2)-G(2)])';
+Xor = [cos(G(3)) sin(G(3));
+      -sin(G(3)) cos(G(3))]*([Xo(:,1)-G(1) Xo(:,2)-G(2)])';
 Xo(:,1) = (Xor(1,:))';
 Xo(:,2) = (Xor(2,:))';
+
+% figure; plot(Xo)
 % discount V before (geometric series)
 
 Vs1 = interpn(x1, x2, x3, x4, V, Xo(:,1), Xo(:,2), Xo(:,3), Xo(:,4), 'nearest', 0);
-
+% figure; plot(Vs1)
 
 r = -dt;
 Qh = r*ones(L,1) - gamma* Vs1; % converting TTR to RL (NTTR)
-
+Qh
 end
 
