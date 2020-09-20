@@ -28,12 +28,12 @@ target_phi = 0;
 dim = 4;
 Min = zeros(dim,1);
 Max = zeros(dim,1);
-Min(1) = -1;
-Min(2) = -1;
+Min(1) = -2;
+Min(2) = -2;
 Min(3) = 0;
 Min(4) = 0;
-Max(1) = 1;
-Max(2) = 1;
+Max(1) = 2;
+Max(2) = 2;
 Max(3) = 2*pi;
 Max(4) = 2;
 

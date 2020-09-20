@@ -51,12 +51,12 @@ U=[u1 u2];
 dim = 4;
 Min = zeros(dim,1);
 Max = zeros(dim,1);
-Min(1) = -1;
-Min(2) = -1;
+Min(1) = -2;
+Min(2) = -2;
 Min(3) = 0;
 Min(4) = 0;
-Max(1) = 1;
-Max(2) = 1;
+Max(1) = 2;
+Max(2) = 2;
 Max(3) = 2*pi;
 Max(4) = 2;
 dx = [0.05; 0.05; 2*pi/20; 0.1];
@@ -81,7 +81,9 @@ Vs1 = interpn(x1, x2, x3, x4, V, Xo(:,1), Xo(:,2), Xo(:,3), Xo(:,4), 'nearest', 
 % figure; plot(Vs1)
 
 r = -dt;
-Qh = r*ones(L,1) - gamma* Vs1; % converting TTR to RL (NTTR)
+% Qh = r*ones(L,1) - gamma* Vs1; % converting TTR to RL (NTTR)
+Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
+
 Qh
 end
 

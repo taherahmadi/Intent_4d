@@ -1,6 +1,6 @@
 clear;clc;close all
 
-xPrecision = [0.1,0.1,2*pi/20,0.1];
+xPrecision = [0.1, 0.1, 2*pi/20,0.1];
 [x,y] = meshgrid(0:xPrecision(1):2);
 load('V.mat');
 Min = [0,0,0,0];Precision =[0.1; 0.1; 2*pi/20; 0.1];
@@ -12,16 +12,15 @@ ph = 10;
 Tf = 10;
 
 % u
-w = .7*[1;1;1;1;1;1;1;-2;-2;-4];
+% w = .7*[1;1;1;1;1;1;1;-2;-2;-4];
 w = 1.5*ones(10,1);
 a = [5;5;10;5;2;2;2;-12;-12;-12];
 
-uPrecision = [0.1,1];
-Uw = -3:uPrecision(1):3;
-Ua = -15:uPrecision(2):10;
 
 % reduced size of possible input
-uPrecision = [0.5,5];
+% uPrecision = [0.5,5];
+uPrecision = [1,10];
+
 Uw = -2:uPrecision(1):2;
 Ua = -15:uPrecision(2):10;
 
@@ -53,8 +52,9 @@ G1 = [1.3, 1.7, 1.6, 0];
 % G7 = [1.9, 0.1, 0, 0];
 % G8 = [1, 1.9, 1.4, 1];
 % G9 = [1.9, 0.3, 0, 1];
-% 
+
 % G = [G1;G2;G3;G4;G5;G6;G7;G8;G9];
+% G = [G1;G2];
 
 n = 5;
 xmin=0;
