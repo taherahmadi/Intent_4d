@@ -1,4 +1,5 @@
 clear;clc;close all
+global L ng
 
 xPrecision = [0.1, 0.1, 2*pi/20,0.1];
 [x,y] = meshgrid(0:xPrecision(1):2);
@@ -13,16 +14,16 @@ Tf = 10;
 
 % u
 % w = .7*[1;1;1;1;1;1;1;-2;-2;-4];
-w = 1.5*ones(10,1);
-a = [5;5;10;5;2;2;2;-12;-12;-12];
+w = 2*ones(10,1);
+a = [5;5;10;5;2;0;-5;-8;-9;-10];
 
 
 % reduced size of possible input
 % uPrecision = [0.5,5];
-uPrecision = [1,10];
+uPrecision = [2,5];
 
 Uw = -2:uPrecision(1):2;
-Ua = -15:uPrecision(2):10;
+Ua = -10:uPrecision(2):10;
 
 % plot(x,y,'.')
 
@@ -30,10 +31,14 @@ Ua = -15:uPrecision(2):10;
 X0 = [0,0,0,0];
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
 Xshow(1,:) = discrete(X(1,:),xPrecision);
-for k=1:Tf-1
+for k=1:Tf
 X (k+1,:) = dynamic (X(k,:),a(k),w(k),dt);
 Xshow(k+1,:) = discrete(X(k+1,:),xPrecision);
 end
+
+% ignore xshow
+Xshow = X;
+
 % hold on;scatter(Xshow(:,1),Xshow(:,2),'ro')
 % figure;
 
@@ -43,24 +48,19 @@ end
 % G2 = [0,2,0,0];
 % G3 = [1,0,0,0];
 
-G1 = [1.3, 1.7, 1.6, 0];
-% G2 = [0.9, 0, 0, 0];
-% G3 = [1, 0.9, 0, 0];
-% G4 = [1.9, 1.9, 0, 0];
-% G5 = [0.1, 0.1, 0, 0];
-% G6 = [0.1, 1.9, 1.6, 0];
-% G7 = [1.9, 0.1, 0, 0];
-% G8 = [1, 1.9, 1.4, 1];
-% G9 = [1.9, 0.3, 0, 1];
+G1 = [1.21,1.513,1.65,0];
+G1 = [0.6789  ,  1.7248 ,   2.2000   ,      0];
+%G1=[1.7736    1.2573    1.1000         0];
 
 % G = [G1;G2;G3;G4;G5;G6;G7;G8;G9];
 % G = [G1;G2];
 
-n = 5;
+ng = 30;
 xmin=0;
 xmax=2;
-G=xmin+rand(n,4)*(xmax-xmin);
-G(1,:) = G1;
+Gg=xmin+rand(ng,4)*(xmax-xmin);
+Gg(1,:) = G1;
+Gg(:,4) = 0;
 %% start
 L=length(Uw)*length(Ua);
 Beta = [0.1; 100];
@@ -70,15 +70,27 @@ PBeta = (1/size(Beta,1))*ones(size(Beta,1),1)';
 PGamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
 
 % weight of particles for goal position
-PGoal = (1/size(G,1))*ones(size(G,1),1,1);
+PGoal = (1/size(Gg,1))*ones(size(Gg,1),1,1);
 
-Pu=zeros(L,Tf,size(Gamma,1),size(Beta,1),size(G,1));
+Pu=zeros(L,Tf,size(Gamma,1),size(Beta,1),size(Gg,1));
 PX = zeros(Tf,L);
 Xp = zeros(L,4,Tf);
+XP_mean = zeros(Tf, 4);
+GP_mean = zeros(Tf, 4);
+PGO = zeros(Tf, size(Gg,1));
+G_proposal = zeros(Tf, 4);
+G_pf = zeros(ng,4,Tf);
+
+XP_pf = zeros(Tf, 4);
+xp_old_pf = zeros(4, L);
+
 % showing results
 PBt(1,:) = PBeta;
 PGt(1,:) = PGamma;
 PWt(1,:) = PGoal; 
+
+% First step set Goal equal to Gg
+G = Gg;
 
 for k=1:Tf
     
@@ -138,7 +150,7 @@ for k=1:Tf
     PGamma = PGamma/SUM;
     
     for gamma=1:length(Gamma)
-        % multi purpose only
+    
         PGt(k+1,gamma) = PGamma(gamma);
     end
  
@@ -217,7 +229,7 @@ for k=1:Tf
     end
     % new goal sampling from goal distribution
     
-    % expected position in 1 step ahead (dynamic)
+    % expected position in 2 step ahead (dynamic)
     % not biased :: learning rules of movement rather than dynamic
     Xp(:,:,k) = twostepdynamic(X(k,:),U(:,2),U(:,1),dt);
     Pt = ones(size(Gamma,1),size(Beta,1),size(G,1));
@@ -237,33 +249,69 @@ for k=1:Tf
     end
     PXp(:,k,:,:,:) = Pu(:,k,:,:,:).*PXp(:,k,:,:,:);
     PX(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
-%     % mean
-%     XP_mean = sum(Xp.*PXp,'all');
+%     % Point estimate: average over all possibility
+    XP_mean(k,:) = PX(k,:)*Xp(:,:,k);
+    
+    
+    % second approach particle filter for 2step prediction
+    [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PX(k,:));
+    xp_old_pf = xpartires_1step;
+    
+    XP_pf(k,:) = xestsir;
+    
+    % estimated goal so far
+    PGO(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),1);
+    % weighted average of all goal particles based on their probability
+    GP_mean(k,:) = PGO(k,:)*G;
+    
+    % combine Gg and past goal
+    
+    Pg =reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[ng,1]);
+
+    [xestsir,stdsir,xpartires]=pf_goal(G,Pg,Gg);
+    %xpartires_total = xpartires;
+    % choose the ng particles randomly
+    G = xpartires;
+    G_proposal(k,:) = xestsir;
+    G_pf(:,:,k) = G;
 
     
 end
 
+time = 1:Tf;
 
-[~,i]=max(Pu(:,:,1,1,1));
+[~,i]=max(PX');
 ff=U(i,:);
 subplot(211);plot(ff(:,1));
 hold on; plot(w,'r');
+legend('max estimate','real');
+ylabel('action w');
 subplot(212);plot(ff(:,2));
 hold on; plot(a,'r');
-figure;
+ylabel('action a');
+xlabel('Time(Sec)');
 
-[~,i]=max(Pu(:,:,2));
-ff=U(i,:);
-subplot(211);plot(ff(:,1));
-hold on; plot(w,'r');
-subplot(212);plot(ff(:,2));
-hold on; plot(a,'r');
-figure;
 
-subplot(221);plot(PBt(:,1))
+figure;
+subplot(221)
+plot(G_proposal(:,1))
+ylabel('goal x')
+subplot(222)
+plot(G_proposal(:,2))
+ylabel('goal y')
+subplot(223)
+plot(G_proposal(:,3))
+ylabel('goal  \theta')
+subplot(224)
+plot(G_proposal(:,4))
+ylabel('goal v')
+
+
+figure;
+subplot(211);plot(PBt(:,1))
 title('Probability of Beta')
 ylabel('Beta = 1')
-subplot(222);plot(PBt(:,2))
+subplot(212);plot(PBt(:,2))
 ylabel('Beta = 10')
 
 figure;
@@ -274,17 +322,17 @@ subplot(212);plot(PGt(:,2))
 ylabel('gamma = 0.99')
 
 figure;
-subplot(911);plot(PWt(:,1))
+subplot(311);plot(PWt(:,1))
 ylabel('Goal 1 ')
 title('Goal Probability')
-subplot(912);plot(PWt(:,2))
+subplot(312);plot(PWt(:,2))
 ylabel('Goal 2 ')
-subplot(913);plot(PWt(:,3))
+subplot(313);plot(PWt(:,3))
 ylabel('Goal 3 ')
-subplot(914);plot(PWt(:,4))
-ylabel('Goal 4 ')
-subplot(915);plot(PWt(:,5))
-ylabel('Goal 5 ')
+% subplot(914);plot(PWt(:,4))
+% ylabel('Goal 4 ')
+% subplot(915);plot(PWt(:,5))
+% ylabel('Goal 5 ')
 
 % subplot(916);plot(PWt(:,6))
 % ylabel('Goal 6 ')
@@ -315,12 +363,63 @@ view(2);
 hold on;plot(Xshow(:,1),Xshow(:,2),'r','LineWidth',2);
 hold on;scatter(Xshow(:,1),Xshow(:,2),50,'ro','LineWidth',2);
 
-hold on;scatter(G(1,1),G(1,2),50,'go','LineWidth',8);
-text(G(1,1),G(1,2), 'G1', 'Fontsize', 10);
 
-for i=2:length(G)
-hold on;scatter(G(i,1),G(i,2),50,'yo','LineWidth',8);
-text(G(i,1),G(i,2), 'G'+string(i), 'Fontsize', 10);    
+% prediction
+hold on;plot(XP_mean(:,1),XP_mean(:,2),'b:','LineWidth',2);
+hold on;scatter(XP_mean(:,1),XP_mean(:,2),50,'bo','LineWidth',2);
+for i=1:Tf
+    hold on;
+    [delta_x, delta_y] = pol2cart(XP_mean(i,3),XP_mean(i,4)/20);
+    quiver(XP_mean(i,1),XP_mean(i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
 end
-
 grid;
+% hold on;scatter(G(1,1),G(1,2),50,'go','LineWidth',8);
+% text(G(1,1),G(1,2), 'G1', 'Fontsize', 10);
+% 
+% for i=2:size(G,1)
+% hold on;scatter(G(i,1),G(i,2),50,'yo','LineWidth',8);
+% text(G(i,1),G(i,2), 'G'+string(i), 'Fontsize', 10);    
+% end
+
+
+ figure;
+ subplot(221);
+  plot(Xshow(:,1)) % check for v , theta
+ hold on; plot([0;0;XP_mean(:,1)],'r:')
+ hold on; plot([0;0; XP_pf(:,1)],'k-.')
+ legend('ground truth','weighted average','pf')
+  subplot(222);
+  plot(Xshow(:,2))
+ hold on; plot([0;0;XP_mean(:,2)],'r:')
+ hold on; plot([0;0; XP_pf(:,2)],'k-.')
+  subplot(223);
+  plot(Xshow(:,3))
+ hold on; plot([0;0;XP_mean(:,3)],'r:')
+ hold on; plot([0;0; XP_pf(:,3)],'k-.')
+  subplot(224);
+ plot(Xshow(:,4))
+ hold on; plot([0;0;XP_mean(:,4)],'r:')
+ hold on; plot([0;0; XP_pf(:,4)],'k-.')
+
+  time1 = repmat(time,[ng,1]);
+   time1 = reshape(time1,[1,ng*Tf]);
+ figure; % plot all goals in time
+ subplot(221);
+ scatter(time1,reshape(G_pf(:,1,:),[1,ng*Tf]),30,'go','LineWidth',8);
+  hold on;scatter(time,(G_proposal(:,1))',50,'k*','LineWidth',8);
+  ylabel('x');
+ subplot(222);
+ scatter(time1,reshape(G_pf(:,2,:),[1,ng*Tf]),30,'go','LineWidth',8);
+  hold on;scatter(time,(G_proposal(:,2))',50,'k*','LineWidth',8);
+  ylabel('y');
+ subplot(223);
+  scatter(time1,reshape(G_pf(:,3,:),[1,ng*Tf]),30,'go','LineWidth',8);
+  hold on;scatter(time,(G_proposal(:,3))',50,'k*','LineWidth',8);
+  ylabel('\theta');
+ subplot(224);
+ scatter(time1,reshape(G_pf(:,4,:),[1,ng*Tf]),30,'go','LineWidth',8);
+  hold on;scatter(time,(G_proposal(:,4))',50,'k*','LineWidth',8);
+  ylabel('v');
+  
+  
+

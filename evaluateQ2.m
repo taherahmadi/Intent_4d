@@ -5,33 +5,41 @@ x = X(1);
 y = X(2);
 alpha = X(3);
 v = X(4);
-xo = x + v*cos(alpha)*dt;
-yo = y + v*sin(alpha)*dt;
-alphao = alpha+ Uw'*dt;
-vo = v+ Ua'*dt ;
+
+for ii=1:2
+    % dynamic
+    if ii==1
+        alphao = alpha- Uw'*dt;
+        vo = v - Ua'*dt ;
+    else
+        alphao = alpha+ Uw'*dt;
+        vo = v + Ua'*dt ;
+    end
 
 
-L=length(Uw)*length(Ua);
-p = meshgrid(alphao,vo);
-p=reshape(p',[L,1]);
-q = meshgrid(vo,alphao);
-q=reshape(q,[L,1]);
+    L=length(Uw)*length(Ua);
+    p = meshgrid(alphao,vo);
+    p=reshape(p',[L,1]);
+    q = meshgrid(vo,alphao);
+    q=reshape(q,[L,1]);
 
-% consider the human only moves along heading (no negative v,q)
-p(q<0)=pi+p(q<0);
-p(p>2*pi)=p(p>2*pi)-2*pi;
-q(q<0)=-q(q<0);
+    % consider the human only moves along heading (no negative v,q)
+    p(p>2*pi)=p(p>2*pi)-2*pi;
+    p(p<0)=-p(p<0)+2*pi;
+    % p(q<0)=pi+p(q<0);
+    % q(q<0)=-q(q<0);
+    p(q<0)=0;
+    q(q<0)=0;
 
-
-% next state
-xoo = xo*ones(L,1) + q.*cos(p)*dt;
-yoo = yo*ones(L,1) + q.*sin(p)*dt;
-Xo = [xo*ones(L,1), yo*ones(L,1),p,q];
-Xoo = [xoo,yoo,p,q];
-
-
-
-
+    if ii==1
+        % dynamic one step ahead
+        xo = x*ones(L,1) + q.*cos(p)*dt;
+        yo = y*ones(L,1) + q.*sin(p)*dt;
+        Xo(:,1:2) = [xo, yo];
+    else
+        Xo(:,3:4) = [p, q];
+    end
+end
 
 u1 = meshgrid(Uw,Ua);
 u1=reshape(u1',[L,1]);
@@ -39,6 +47,21 @@ u2 = meshgrid(Ua,Uw);
 u2=reshape(u2,[L,1]);
 
 U=[u1 u2];
+
+% next state (2-step ahead)
+xo = x + v*cos(alpha)*dt;
+yo = y + v*sin(alpha)*dt;
+xoo = xo*ones(L,1) + q.*cos(p)*dt;
+yoo = yo*ones(L,1) + q.*sin(p)*dt; 
+alphaoo = p+ U(:,1)*dt;
+voo = q+ U(:,2)*dt ;
+
+Xoo = [xoo,yoo,alphaoo,voo];
+
+%Xo=Xoo;
+
+
+
 %Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
 
 % Find the discrete value of dynamic
@@ -74,16 +97,26 @@ Xor = [cos(G(3)) sin(G(3));
 Xo(:,1) = (Xor(1,:))';
 Xo(:,2) = (Xor(2,:))';
 
+
+alf = Xo(:,3) ;
+alf(alf<0)=-alf(alf<0)+2*pi;
+alf(alf>2*pi)=alf(alf>2*pi)-2*pi;
+vf = Xo(:,4) ;
+vf(vf<0)=-inf;
+alf(vf<0)=-inf;
+Xo(:,4) = vf;
+Xo(:,3) = alf;
+
 % figure; plot(Xo)
 % discount V before (geometric series)
 
 Vs1 = interpn(x1, x2, x3, x4, V, Xo(:,1), Xo(:,2), Xo(:,3), Xo(:,4), 'nearest', 0);
-% figure; plot(Vs1)
+Vs1(vf<0)=10000;
+%figure; plot(Vs1)
 
 r = -dt;
-% Qh = r*ones(L,1) - gamma* Vs1; % converting TTR to RL (NTTR)
-Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
+Qh = (r*ones(L,1) - gamma* Vs1)'; % converting TTR to RL (NTTR)
+Qh1 = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
 
-Qh
 end
 
