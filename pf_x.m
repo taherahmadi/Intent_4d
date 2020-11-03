@@ -1,4 +1,4 @@
-function [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(meas,xpartiold,U,prob)
+function [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X,xpartiold,U,prob, n_part_x, horizon)
 %%
 % Nparti: number of particles
 % meas: meas(1), meas(2) are the measured x,y position
@@ -6,13 +6,11 @@ function [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(meas,xpartiold,U,prob)
 % u: control signal u(1)=w , u(2)=a
 
 %%
-global L;
-
 % initilization
 
-Nparti=L;
+Nparti=n_part_x; 
 Nparti1=1/Nparti;
-stdmeas=(0.01); % standard deviation of the measurement errors
+std_meas=(0.01); % standard deviation of the measurement errors
 
 stdmodel1=0.001; % standard deviation of the evolution model
 stdmodel2=0.001; % standard deviation of the evolution model
@@ -33,22 +31,48 @@ xpartires=zeros(4,Nparti);
 xpartires_1step=zeros(4,Nparti);
 wpartires=zeros(1,Nparti);
 
+% sampling from actions
+sum_probs = zeros(size(prob));
+for i=1:size(prob,2)
+    sum_probs(i) = sum(prob(1:i));
+end
+ % generating measurement input
+ meas = X+randn(1,4)*std_meas;
+
 %%%%%%%%%%%%%%%%%%%%%%%%
 % Advancing Particles %
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 for i=1:Nparti
 %%%%%%%%%%%%%%%%%%%%
-% 1 - PREDICTION %
+% 1 - ESTIMATION %
 %%%%%%%%%%%%%%%%%%%%
 
 F=[1 0 0 dt*cos(xpartiold(3,i));0 1 0 dt*sin(xpartiold(3,i)); 0 0 1 0; 0 0 0 1];
 
 %F=[1 dt 0;0 1 0;0 0 1];
 % two step prediction
-x_onestep(:,i)=F*xpartiold(:,i)+[0;0;dt*U(i,1);dt*U(i,2)];
-xpartinew(:,i) = F*x_onestep(:,i)+[0;0;dt*U(i,1);dt*U(i,2)]+randn*[stdmodel1;stdmodel2;stdmodel3;stdmodel4];
+rand_idx = rand;
+sampeled_u_idx = find(sum_probs>rand_idx);
+sampeled_u_idx = sampeled_u_idx(1);
+sampeled_u = U(sampeled_u_idx,:);
 
+x_onestep(:,i)=F*xpartiold(:,i)+[0;0;dt*sampeled_u(1);dt*sampeled_u(2)] +...
+    randn*[stdmodel1;stdmodel2;stdmodel3;stdmodel4];
+
+%%%%%%%%%%%%%%%%%%%%
+% 2 - PREDICTION %
+%%%%%%%%%%%%%%%%%%%%
+% i =1
+xpartinew(:,i) = x_onestep(:,i);
+for j=2:horizon
+    if j == horizon
+        xpartinew(:,i) = F*xpartinew(:,i)+[0;0;dt*sampeled_u(1);dt*sampeled_u(2)]+...
+                        randn*[stdmodel1;stdmodel2;stdmodel3;stdmodel4];
+    else
+        xpartinew(:,i) = F*xpartinew(:,i)+[0;0;dt*sampeled_u(1);dt*sampeled_u(2)];
+    end
+end
 % else
 %     xpartinew(:,i)=randn*[stdmodel;0];
 %  end
@@ -61,12 +85,12 @@ xpartinew(:,i) = F*x_onestep(:,i)+[0;0;dt*U(i,1);dt*U(i,2)]+randn*[stdmodel1;std
       
 
 % integrating the probability of each action with the stdmeas
-stdmeas = stdmeas/prob(i);
+% std_meas = std_meas/prob(i);
  %%%%%%%%%%%%%%%%%%%%
 % Weights %
 %%%%%%%%%%%%%%%%%%%%
-wparti(i)=exp(-((xpartiold(1,i)-meas(1))/stdmeas)^2-((xpartiold(2,i)-meas(2))/stdmeas)^2 ...
-            -((xpartiold(3,i)-meas(3))/stdmeas)^2 -((xpartiold(4,i)-meas(4))/stdmeas)^2);
+wparti(i)=exp(-((x_onestep(1,i)-meas(1))/std_meas)^2-((x_onestep(2,i)-meas(2))/std_meas)^2 ...
+            -((x_onestep(3,i)-meas(3))/std_meas)^2 -((x_onestep(4,i)-meas(4))/std_meas)^2);
 
 
 end
@@ -75,7 +99,7 @@ end
 wtotal=sum(wparti);
 wpartin=wparti./wtotal;
 %%%%%%%%%%%%%%%%
-% 2 - UPDATE %
+% 3 - UPDATE %
 %%%%%%%%%%%%%%%%
 %xpartiw=xpartinew.*wparti;
 %%%%%%%%%%%%%%%%%%%%%%
@@ -87,7 +111,7 @@ wpartin=wparti./wtotal;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Standard Deviation at time k+1 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 3 - RESAMPLING %
+% 4- RESAMPLING %
 %%%%%%%%%%%%%%%%%%%%%%
 %1
 cresa=zeros(Nparti,1);

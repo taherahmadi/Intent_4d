@@ -1,4 +1,4 @@
-function [xestsir,stdsir,xpartires]=pf_goal(xpartiold,prob,particle_set)
+function [xestsir,stdsir,xpartires]=pf_goal(xpartiold,prob,particle_set,n_part_g)
 %%
 % Nparti: number of particles
 % meas: meas(1), meas(2), meas(3) are the measured x,y,theta position
@@ -6,10 +6,9 @@ function [xestsir,stdsir,xpartires]=pf_goal(xpartiold,prob,particle_set)
 % u: control signal u(1)=w , u(2)=a
 
 %%
-global ng
 % initilization
 xpartiold =xpartiold';
-Nparti=ng;
+Nparti=n_part_g;
 Nparti1=1/Nparti;
 alpha = 0.1; % chance of choosing from fix particle set
 stdmeas=(0.1); % standard deviation of the measurement errors

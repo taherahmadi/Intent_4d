@@ -1,5 +1,4 @@
 clear;clc;close all
-global L ng
 
 xPrecision = [0.1, 0.1, 2*pi/20,0.1];
 [x,y] = meshgrid(0:xPrecision(1):2);
@@ -55,10 +54,11 @@ G1 = [0.6789  ,  1.7248 ,   2.2000   ,      0];
 % G = [G1;G2;G3;G4;G5;G6;G7;G8;G9];
 % G = [G1;G2];
 
-ng = 30;
+horizon = 2;
+n_part_g = 30; n_part_x=50;
 xmin=0;
 xmax=2;
-Gg=xmin+rand(ng,4)*(xmax-xmin);
+Gg=xmin+rand(n_part_g,4)*(xmax-xmin);
 Gg(1,:) = G1;
 Gg(:,4) = 0;
 %% start
@@ -79,10 +79,10 @@ XP_mean = zeros(Tf, 4);
 GP_mean = zeros(Tf, 4);
 PGO = zeros(Tf, size(Gg,1));
 G_proposal = zeros(Tf, 4);
-G_pf = zeros(ng,4,Tf);
+G_pf = zeros(n_part_g,4,Tf);
 
 XP_pf = zeros(Tf, 4);
-xp_old_pf = zeros(4, L);
+xp_old_pf = zeros(4, n_part_x);
 
 % showing results
 PBt(1,:) = PBeta;
@@ -254,7 +254,7 @@ for k=1:Tf
     
     
     % second approach particle filter for 2step prediction
-    [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PX(k,:));
+    [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PX(k,:),n_part_x,horizon);
     xp_old_pf = xpartires_1step;
     
     XP_pf(k,:) = xestsir;
@@ -266,9 +266,9 @@ for k=1:Tf
     
     % combine Gg and past goal
     
-    Pg =reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[ng,1]);
+    Pg =reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[n_part_g,1]);
 
-    [xestsir,stdsir,xpartires]=pf_goal(G,Pg,Gg);
+    [xestsir,stdsir,xpartires]=pf_goal(G,Pg,Gg,n_part_g);
     %xpartires_total = xpartires;
     % choose the ng particles randomly
     G = xpartires;
@@ -401,23 +401,23 @@ grid;
  hold on; plot([0;0;XP_mean(:,4)],'r:')
  hold on; plot([0;0; XP_pf(:,4)],'k-.')
 
-  time1 = repmat(time,[ng,1]);
-   time1 = reshape(time1,[1,ng*Tf]);
+  time1 = repmat(time,[n_part_g,1]);
+   time1 = reshape(time1,[1,n_part_g*Tf]);
  figure; % plot all goals in time
  subplot(221);
- scatter(time1,reshape(G_pf(:,1,:),[1,ng*Tf]),30,'go','LineWidth',8);
+ scatter(time1,reshape(G_pf(:,1,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
   hold on;scatter(time,(G_proposal(:,1))',50,'k*','LineWidth',8);
   ylabel('x');
  subplot(222);
- scatter(time1,reshape(G_pf(:,2,:),[1,ng*Tf]),30,'go','LineWidth',8);
+ scatter(time1,reshape(G_pf(:,2,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
   hold on;scatter(time,(G_proposal(:,2))',50,'k*','LineWidth',8);
   ylabel('y');
  subplot(223);
-  scatter(time1,reshape(G_pf(:,3,:),[1,ng*Tf]),30,'go','LineWidth',8);
+  scatter(time1,reshape(G_pf(:,3,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
   hold on;scatter(time,(G_proposal(:,3))',50,'k*','LineWidth',8);
   ylabel('\theta');
  subplot(224);
- scatter(time1,reshape(G_pf(:,4,:),[1,ng*Tf]),30,'go','LineWidth',8);
+ scatter(time1,reshape(G_pf(:,4,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
   hold on;scatter(time,(G_proposal(:,4))',50,'k*','LineWidth',8);
   ylabel('v');
   
