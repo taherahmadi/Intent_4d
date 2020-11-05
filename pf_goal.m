@@ -1,4 +1,4 @@
-function [xestsir,stdsir,xpartires]=pf_goal(xpartiold,prob,particle_set,n_part_g)
+function [xestsir,stdsir,xpartires]=pf_goal(xpartiold,prob,particle_set,n_part_g,dt)
 %%
 % Nparti: number of particles
 % meas: meas(1), meas(2), meas(3) are the measured x,y,theta position
@@ -14,14 +14,13 @@ alpha = 0.1; % chance of choosing from fix particle set
 stdmeas=(0.1); % standard deviation of the measurement errors
 
 
-stdmodel1=0.01; % standard deviation of the evolution model
-stdmodel2=0.01; % standard deviation of the evolution model
-stdmodel3=0.01; % standard deviation of the evolution model
+stdmodel1=0.1; % standard deviation of the evolution model
+stdmodel2=0.1; % standard deviation of the evolution model
+stdmodel3=0.1; % standard deviation of the evolution model
 stdmodel4=0; % standard deviation of the evolution model
 
 
 stdrw=0.001; % random walk of the estimated parameter (f)
-dt=0.001;
 
 % initial condition
 xestsir=[0;0;0;0];stdsir=[1;1;1;1];

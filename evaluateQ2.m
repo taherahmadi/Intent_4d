@@ -74,14 +74,14 @@ Xoo = [xoo,yoo,alphaoo,voo];
 dim = 4;
 Min = zeros(dim,1);
 Max = zeros(dim,1);
-Min(1) = -2;
-Min(2) = -2;
+Min(1) = -4;
+Min(2) = -4;
 Min(3) = 0;
-Min(4) = 0;
-Max(1) = 2;
-Max(2) = 2;
+Min(4) = -0.2;
+Max(1) = 4;
+Max(2) = 4;
 Max(3) = 2*pi;
-Max(4) = 2;
+Max(4) = 2.2;
 dx = [0.05; 0.05; 2*pi/20; 0.1];
 
 x1 = Min(1):dx(1):Max(1);
@@ -116,7 +116,7 @@ Vs1(vf<0)=10000;
 
 r = -dt;
 Qh = (r*ones(L,1) - gamma* Vs1)'; % converting TTR to RL (NTTR)
-Qh1 = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
+Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
 
 end
 

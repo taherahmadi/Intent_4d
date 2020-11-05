@@ -1,4 +1,4 @@
-function [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X,xpartiold,U,prob, n_part_x, horizon)
+function [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X,xpartiold,U,prob, n_part_x, horizon,dt)
 %%
 % Nparti: number of particles
 % meas: meas(1), meas(2) are the measured x,y position
@@ -17,8 +17,6 @@ stdmodel2=0.001; % standard deviation of the evolution model
 stdmodel3=0.001; % standard deviation of the evolution model
 stdmodel4=0.001; % standard deviation of the evolution model
 
-
-dt=0.1;
 
 
 % initial condition

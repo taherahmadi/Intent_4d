@@ -17,8 +17,8 @@ global target_phi;
 global obs_rad; 
 global obs_v_min;
 
-a_upper = 10; a_lower = -15;
-omega_max = 3; % why 3? was 1
+a_upper = 1.5; a_lower = -1.5;
+omega_max = 0.5; % why 3? was 1
 
 % target setting
 target_rad = 0.01;
@@ -28,20 +28,21 @@ target_v = 0;
 target_phi = 0;
 
 % obstacle setting
-obs_rad = 0.25;
-obs_v_min = 0;
+obs_rad = 0.2;
+obs_v_min = -0.2;
+obs_v_max = 2;
 
 dim = 4;
 Min = zeros(dim,1);
 Max = zeros(dim,1);
-Min(1) = -2;
-Min(2) = -2;
+Min(1) = -4;
+Min(2) = -4;
 Min(3) = 0; 
-Min(4) = 0; % we defined minimum v = 0 so why do we need to also define an obstacle?
-Max(1) = 2;
-Max(2) = 2;
+Min(4) = -0.2; % we defined minimum v = -0.2 to be able to compute gradients
+Max(1) = 4;
+Max(2) = 4;
 Max(3) = 2*pi;
-Max(4) = 2;
+Max(4) = 2.2;
 
 % dx = [0.1; 0.1; 2*pi/100];
 % dimension will be 41x41x40
@@ -63,8 +64,11 @@ flag =     ((target_x - xs(:,:,:,:,1)).^2 + (target_y - xs(:,:,:,:,2)).^2) <= ta
    %        abs(target_rad - xs(:,:,:,:,3)) <= 0 &...
 phi(flag) = 0;
 
-% Add Obstacle for v near 0
-obs((xs(:,:,:,:,4) - obs_v_min <=  obs_rad) ) = 1;
+% Add Obstacle for v <= 0
+obs((xs(:,:,:,:,4) <=  Min(4) + obs_rad) ) = 1;
+% Add Obstacle for v > 2
+obs((xs(:,:,:,:,4) >  Max(4) - obs_rad) ) = 1;
+
 
 % Save obstacle map
 % obs_map = cat(3, obs, obs(:,:,1,:));

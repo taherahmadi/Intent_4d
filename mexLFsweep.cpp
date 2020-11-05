@@ -203,8 +203,11 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                         + sigma4*(phi[i][j][k][h+1] + phi[i][j][k][h-1])/(2*dx[3]);
             }
             
-            phi[i][j][k][h] = min(phiTemp/c, phiOld);
-
+            if (obs_this > 0) {
+                phi[i][j][k][h] = phiOld;
+            }else{
+                phi[i][j][k][h] = min(phiTemp/c, phiOld);
+            }
             error = max(error, phiOld - phi[i][j][k][h]);
 //             mexPrintf("phitemp:%10f, phiold:%f \n", (phiTemp, phiOld));
 //             mexPrintf("c:%f \n", c);

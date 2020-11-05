@@ -3,26 +3,26 @@ clear;clc;close all
 xPrecision = [0.1, 0.1, 2*pi/20,0.1];
 [x,y] = meshgrid(0:xPrecision(1):2);
 load('V.mat');
-Min = [0,0,0,0];Precision =[0.1; 0.1; 2*pi/20; 0.1];
+Min = [0,0,0,0];
 
 alpha = 0:xPrecision(4):2*pi;
 v = 0:xPrecision(3):2;
-dt = 0.1;
-ph = 10;
-Tf = 10;
+dt = 0.5;
+final_time = 10;
 
+%% synthetic trajectory
 % u
-% w = .7*[1;1;1;1;1;1;1;-2;-2;-4];
-w = 2*ones(10,1);
-a = [5;5;10;5;2;0;-5;-8;-9;-10];
-
+w = [0.0;0.1;0.5;0.5;0.5;0.5;0.5;0.5;-0.1;-0.2];
+a = [0.1;1;1;1;0.5;0;-1;-1.5;-1;-0.2];
+% a = 1.5*ones(10,1)
 
 % reduced size of possible input
 % uPrecision = [0.5,5];
-uPrecision = [2,5];
+uPrecision = [0.25, 1];
 
-Uw = -2:uPrecision(1):2;
-Ua = -10:uPrecision(2):10;
+Uw = -0.5:uPrecision(1):0.5;
+Ua = -1.5:uPrecision(2):1.5;
+Ua = [-1.5000   -0.5000    0   0.5000    1.5000]
 
 % plot(x,y,'.')
 
@@ -30,7 +30,7 @@ Ua = -10:uPrecision(2):10;
 X0 = [0,0,0,0];
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
 Xshow(1,:) = discrete(X(1,:),xPrecision);
-for k=1:Tf
+for k=1:final_time
 X (k+1,:) = dynamic (X(k,:),a(k),w(k),dt);
 Xshow(k+1,:) = discrete(X(k+1,:),xPrecision);
 end
@@ -47,52 +47,50 @@ Xshow = X;
 % G2 = [0,2,0,0];
 % G3 = [1,0,0,0];
 
-G1 = [1.21,1.513,1.65,0];
-G1 = [0.6789  ,  1.7248 ,   2.2000   ,      0];
-%G1=[1.7736    1.2573    1.1000         0];
-
-% G = [G1;G2;G3;G4;G5;G6;G7;G8;G9];
-% G = [G1;G2];
+G1 = [2.8771    3.0618    1.4000    0.0000];
 
 horizon = 2;
-n_part_g = 30; n_part_x=50;
+n_part_g = 2; n_part_x=10;
 xmin=0;
-xmax=2;
-Gg=xmin+rand(n_part_g,4)*(xmax-xmin);
-Gg(1,:) = G1;
-Gg(:,4) = 0;
+xmax=+4;
+
+g_particles=xmin+rand(n_part_g,4)*(xmax-xmin);
+g_particles(1,:) = G1;
+g_particles(:,4) = 0; % set goal-state velocities zero
 %% start
-L=length(Uw)*length(Ua);
-Beta = [0.1; 100];
+len_u_comb=length(Uw)*length(Ua);
+Beta = [0.1; 10];
+Beta = [1]
 Gamma = [0.009 ;0.99];
+Gamma = [1]
 
-PBeta = (1/size(Beta,1))*ones(size(Beta,1),1)';
-PGamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
+P_Beta = (1/size(Beta,1))*ones(size(Beta,1),1)';
+P_Gamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
 
+%% goal particle
 % weight of particles for goal position
-PGoal = (1/size(Gg,1))*ones(size(Gg,1),1,1);
+P_Goal = (1/size(g_particles,1))*ones(size(g_particles,1),1,1);
 
-Pu=zeros(L,Tf,size(Gamma,1),size(Beta,1),size(Gg,1));
-PX = zeros(Tf,L);
-Xp = zeros(L,4,Tf);
-XP_mean = zeros(Tf, 4);
-GP_mean = zeros(Tf, 4);
-PGO = zeros(Tf, size(Gg,1));
-G_proposal = zeros(Tf, 4);
-G_pf = zeros(n_part_g,4,Tf);
+Pu=zeros(len_u_comb,final_time,size(Gamma,1),size(Beta,1),size(g_particles,1));
+PXt1 = zeros(final_time,len_u_comb);
+nstep_pred_states = zeros(len_u_comb,4,final_time);
+nstep_pred_states_mean = zeros(final_time, 4);
 
-XP_pf = zeros(Tf, 4);
+g_parts_time_4plot = zeros(final_time, 4);
+g_parts_satter_4plot = zeros(n_part_g,4,final_time);
+
+XP_pf = zeros(final_time, 4);
 xp_old_pf = zeros(4, n_part_x);
 
 % showing results
-PBt(1,:) = PBeta;
-PGt(1,:) = PGamma;
-PWt(1,:) = PGoal; 
+PBt(1,:) = P_Beta;
+PGt(1,:) = P_Gamma;
+PWt(1,:) = P_Goal;
 
 % First step set Goal equal to Gg
-G = Gg;
-
-for k=1:Tf
+G = g_particles;
+PXp = ones(size(Pu));
+for k=1:final_time
     
     % prediction of u before observation
     for m=1:length(Beta)
@@ -101,14 +99,16 @@ for k=1:Tf
             gamma = Gamma(n);
             for i=1:size(G,1)
                % [Q,U] = evaluateQ(X(k,:),Uw,Ua,dt,G1,gamma);
-                [Q,U] = evaluateQ2(phi,Min,Precision,X(k,:),Uw,Ua,dt,G(i,:),gamma);
+                [Q,U] = evaluateQ2(phi,Min,xPrecision,X(k,:),Uw,Ua,dt,G(i,:),gamma);
                 % i > m > n :MSB
                 %^P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
                 Pu(:,k,n,m,i) = evaluateP(Q,beta);
             end
         end
     end
-    
+%     % for values with very small Q we set Pu=0;
+%     Pu(isnan(Pu)) = 0;
+%     Pu=Pu./sum(Pu,1);
     % update parameters after observing u
     u = [w(k),a(k)];
 %     ia = find(U(:,1)==w(k));
@@ -124,6 +124,7 @@ for k=1:Tf
         end
     end
     ind = ib(aa);
+    idx_real_u(k) = ind; 
     
     
     % update gamma
@@ -142,16 +143,16 @@ for k=1:Tf
     for gamma=1:length(Gamma)
         PG(gamma) = sum(sum(Pu(ind,k,gamma,:,:))); %+Pu(ind,k,gamma,2,1)+Pu(ind,k,gamma,1,2)+Pu(ind,k,gamma,2,2);
         % filter role
-        PGamma(gamma) = PGamma(gamma)*PG(gamma);
+        P_Gamma(gamma) = P_Gamma(gamma)*PG(gamma);
     end
     
     % normalization
-    SUM = sum(PGamma);
-    PGamma = PGamma/SUM;
+    SUM = sum(P_Gamma);
+    P_Gamma = P_Gamma/SUM;
     
     for gamma=1:length(Gamma)
     
-        PGt(k+1,gamma) = PGamma(gamma);
+        PGt(k+1,gamma) = P_Gamma(gamma);
     end
  
     % update beta
@@ -169,7 +170,7 @@ for k=1:Tf
     for goal=1:size(G,1)
         for beta=1:length(Beta)
             for gamma=1:length(Gamma)
-                Pbg(beta, goal) = Pbg(beta, goal) + Pu(ind,k,gamma,beta,goal)*PGamma(gamma);
+                Pbg(beta, goal) = Pbg(beta, goal) + Pu(ind,k,gamma,beta,goal)*P_Gamma(gamma);
             end
         end
     end
@@ -180,7 +181,7 @@ for k=1:Tf
     
     for beta=1:length(Beta)
         % filtering role
-        PBeta(beta) = PBeta(beta)*sum(Pbg(beta,:));
+        P_Beta(beta) = P_Beta(beta)*sum(Pbg(beta,:));
     end
     
 %     PBeta(1) = PBeta(1)*Pb1g1;
@@ -189,23 +190,23 @@ for k=1:Tf
 %     PBeta(4) = PBeta(4)*Pb2g2;
     
     % normalization
-    sm = sum(PBeta);
-    PBeta = PBeta/sm;
+    sm = sum(P_Beta);
+    P_Beta = P_Beta/sm;
   
     
     % save purpose only
     for beta=1:length(Beta)
-        PBt(k+1,beta) = PBeta(beta);
+        PBt(k+1,beta) = P_Beta(beta);
     end
     
     % update g
-    for goal=1:size(PGoal,1)
-        PGoal(goal) = PGoal(goal)*sum(Pbg(:, goal));
+    for goal=1:size(P_Goal,1)
+        P_Goal(goal) = P_Goal(goal)*sum(Pbg(:, goal));
     end
     
     % normalize 
-    sm = sum(PGoal);
-    PGoal = PGoal./sm;
+    sm = sum(P_Goal);
+    P_Goal = P_Goal./sm;
     
 %     G(:,1:2) = G(:,1:2) .* PGoal 
 %     G(:,1:2) = xmin+G(:,1:2)*(xmax-xmin)
@@ -224,14 +225,14 @@ for k=1:Tf
 
     
     % save purpose only
-    for goal=1:size(PGoal,1)
-        PWt(k+1,goal) = PGoal(goal);
+    for goal=1:size(P_Goal,1)
+        PWt(k+1,goal) = P_Goal(goal);
     end
     % new goal sampling from goal distribution
     
     % expected position in 2 step ahead (dynamic)
     % not biased :: learning rules of movement rather than dynamic
-    Xp(:,:,k) = twostepdynamic(X(k,:),U(:,2),U(:,1),dt);
+    nstep_pred_states(:,:,k) = nstepdynamic(horizon,X(k,:),U(:,2),U(:,1),dt); %TODO
     Pt = ones(size(Gamma,1),size(Beta,1),size(G,1));
     for gamma=1:size(Gamma,1)
         Pt(gamma,:,:) = Pt(gamma,:,:)*PGt(k+1,gamma);
@@ -243,44 +244,68 @@ for k=1:Tf
         Pt(:,:,goal) = Pt(:,:,goal)*PWt(k+1,goal);
     end
     
-    PXp = ones(size(Pu));
+%     PXp = ones(size(Pu));
     for jj =1:size(Pu,1)
         PXp(jj,k,:,:,:) = Pt; 
     end
     PXp(:,k,:,:,:) = Pu(:,k,:,:,:).*PXp(:,k,:,:,:);
-    PX(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
+    PXt1(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
 %     % Point estimate: average over all possibility
-    XP_mean(k,:) = PX(k,:)*Xp(:,:,k);
+    nstep_pred_states_mean(k,:) = PXt1(k,:)*nstep_pred_states(:,:,k);
     
     
     % second approach particle filter for 2step prediction
-    [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PX(k,:),n_part_x,horizon);
+    [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),n_part_x,horizon,dt);
     xp_old_pf = xpartires_1step;
     
     XP_pf(k,:) = xestsir;
-    
-    % estimated goal so far
-    PGO(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),1);
-    % weighted average of all goal particles based on their probability
-    GP_mean(k,:) = PGO(k,:)*G;
     
     % combine Gg and past goal
     
     Pg =reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[n_part_g,1]);
 
-    [xestsir,stdsir,xpartires]=pf_goal(G,Pg,Gg,n_part_g);
+    [xestsir,stdsir,xpartires]=pf_goal(G,Pg,g_particles,n_part_g,dt);
     %xpartires_total = xpartires;
     % choose the ng particles randomly
     G = xpartires;
-    G_proposal(k,:) = xestsir;
-    G_pf(:,:,k) = G;
-
+    g_parts_time_4plot(k,:) = xestsir;
+    g_parts_satter_4plot(:,:,k) = G;
+    
+    % prediction    
+%     i = k;
+%     figure;
+%     title(i);
+%     hold on;plot(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),'b:','LineWidth',2);
+%     hold on;scatter(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),50,'bo','LineWidth',2);
+%     [delta_x_g, delta_y_g] = pol2cart(G(:,3),0.5);
+%     quiver(G(:,1),G(:,2),delta_x_g,delta_y_g,0,'linewidth',2, 'MaxHeadSize',1.5)
+%     hold on; scatter(G(:,1),G(:,2));
+%     hold on;plot(Xshow(1:i,1),Xshow(1:i,2),'r','LineWidth',2);
+%     hold on;scatter(Xshow(1:i,1),Xshow(1:i,2),50,'ro','LineWidth',2);
+%     hold on;
+%     [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(1:i,3),nstep_pred_states_mean(1:i,4)/5);
+%     quiver(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
+%     grid;
     
 end
 
-time = 1:Tf;
+time = 1:final_time;
+lables = strings(size(U,1), 1);
+for t=1:size(U,1)
+   lables(t,1) =  sprintf('%0.2f,%0.2f',U(t,1),U(t,2));
+end
 
-[~,i]=max(PX');
+p_u_a_t = PXt1';
+for t=time
+    figure;
+    plot(p_u_a_t(:,t))
+    hold on; bar(idx_real_u(t),max(p_u_a_t(:,t)),'red');
+    labels=1:25;
+    xticks(1:25)
+    xticklabels(lables)
+end
+
+[~,i]=max(PXt1');
 ff=U(i,:);
 subplot(211);plot(ff(:,1));
 hold on; plot(w,'r');
@@ -291,19 +316,18 @@ hold on; plot(a,'r');
 ylabel('action a');
 xlabel('Time(Sec)');
 
-
 figure;
 subplot(221)
-plot(G_proposal(:,1))
+plot(g_parts_time_4plot(:,1))
 ylabel('goal x')
 subplot(222)
-plot(G_proposal(:,2))
+plot(g_parts_time_4plot(:,2))
 ylabel('goal y')
 subplot(223)
-plot(G_proposal(:,3))
+plot(g_parts_time_4plot(:,3))
 ylabel('goal  \theta')
 subplot(224)
-plot(G_proposal(:,4))
+plot(g_parts_time_4plot(:,4))
 ylabel('goal v')
 
 
@@ -365,12 +389,13 @@ hold on;scatter(Xshow(:,1),Xshow(:,2),50,'ro','LineWidth',2);
 
 
 % prediction
-hold on;plot(XP_mean(:,1),XP_mean(:,2),'b:','LineWidth',2);
-hold on;scatter(XP_mean(:,1),XP_mean(:,2),50,'bo','LineWidth',2);
-for i=1:Tf
+hold on;plot(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),'b:','LineWidth',2);
+hold on;scatter(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),50,'bo','LineWidth',2);
+hold on; scatter(g_particles(:,1),g_particles(:,2));
+for i=1:final_time
     hold on;
-    [delta_x, delta_y] = pol2cart(XP_mean(i,3),XP_mean(i,4)/20);
-    quiver(XP_mean(i,1),XP_mean(i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
+    [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(i,3),nstep_pred_states_mean(i,4)/5);
+    quiver(nstep_pred_states_mean(i,1),nstep_pred_states_mean(i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
 end
 grid;
 % hold on;scatter(G(1,1),G(1,2),50,'go','LineWidth',8);
@@ -385,40 +410,40 @@ grid;
  figure;
  subplot(221);
   plot(Xshow(:,1)) % check for v , theta
- hold on; plot([0;0;XP_mean(:,1)],'r:')
+ hold on; plot([0;0;nstep_pred_states_mean(:,1)],'r:')
  hold on; plot([0;0; XP_pf(:,1)],'k-.')
  legend('ground truth','weighted average','pf')
   subplot(222);
   plot(Xshow(:,2))
- hold on; plot([0;0;XP_mean(:,2)],'r:')
+ hold on; plot([0;0;nstep_pred_states_mean(:,2)],'r:')
  hold on; plot([0;0; XP_pf(:,2)],'k-.')
   subplot(223);
   plot(Xshow(:,3))
- hold on; plot([0;0;XP_mean(:,3)],'r:')
+ hold on; plot([0;0;nstep_pred_states_mean(:,3)],'r:')
  hold on; plot([0;0; XP_pf(:,3)],'k-.')
   subplot(224);
  plot(Xshow(:,4))
- hold on; plot([0;0;XP_mean(:,4)],'r:')
+ hold on; plot([0;0;nstep_pred_states_mean(:,4)],'r:')
  hold on; plot([0;0; XP_pf(:,4)],'k-.')
 
   time1 = repmat(time,[n_part_g,1]);
-   time1 = reshape(time1,[1,n_part_g*Tf]);
+   time1 = reshape(time1,[1,n_part_g*final_time]);
  figure; % plot all goals in time
  subplot(221);
- scatter(time1,reshape(G_pf(:,1,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
-  hold on;scatter(time,(G_proposal(:,1))',50,'k*','LineWidth',8);
+ scatter(time1,reshape(g_parts_satter_4plot(:,1,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+  hold on;scatter(time,(g_parts_time_4plot(:,1))',50,'k*','LineWidth',8);
   ylabel('x');
  subplot(222);
- scatter(time1,reshape(G_pf(:,2,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
-  hold on;scatter(time,(G_proposal(:,2))',50,'k*','LineWidth',8);
+ scatter(time1,reshape(g_parts_satter_4plot(:,2,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+  hold on;scatter(time,(g_parts_time_4plot(:,2))',50,'k*','LineWidth',8);
   ylabel('y');
  subplot(223);
-  scatter(time1,reshape(G_pf(:,3,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
-  hold on;scatter(time,(G_proposal(:,3))',50,'k*','LineWidth',8);
+  scatter(time1,reshape(g_parts_satter_4plot(:,3,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+  hold on;scatter(time,(g_parts_time_4plot(:,3))',50,'k*','LineWidth',8);
   ylabel('\theta');
  subplot(224);
- scatter(time1,reshape(G_pf(:,4,:),[1,n_part_g*Tf]),30,'go','LineWidth',8);
-  hold on;scatter(time,(G_proposal(:,4))',50,'k*','LineWidth',8);
+ scatter(time1,reshape(g_parts_satter_4plot(:,4,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+  hold on;scatter(time,(g_parts_time_4plot(:,4))',50,'k*','LineWidth',8);
   ylabel('v');
   
   
