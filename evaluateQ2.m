@@ -1,31 +1,30 @@
 function [Qh,U ] = evaluateQ2(V,Min,Precision,X,Uw,Ua,dt,G,gamma)
-%UNTITLED3 Summary of this function goes here
-%   Detailed explanation goes here
+
 x = X(1);
 y = X(2);
-alpha = X(3);
+theta = X(3);
 v = X(4);
 
+Length_U=length(Uw)*length(Ua);
 for ii=1:2
     % dynamic
     if ii==1
-        alphao = alpha- Uw'*dt;
+        alphao = theta- Uw'*dt;
         vo = v - Ua'*dt ;
     else
-        alphao = alpha+ Uw'*dt;
+        alphao = theta+ Uw'*dt;
         vo = v + Ua'*dt ;
     end
 
-
-    L=length(Uw)*length(Ua);
     p = meshgrid(alphao,vo);
-    p=reshape(p',[L,1]);
+    p=reshape(p',[Length_U,1]);
     q = meshgrid(vo,alphao);
-    q=reshape(q,[L,1]);
+    q=reshape(q,[Length_U,1]);
 
     % consider the human only moves along heading (no negative v,q)
     p(p>2*pi)=p(p>2*pi)-2*pi;
-    p(p<0)=-p(p<0)+2*pi;
+    p(p<0)= p(p<0)+2*pi; 
+    
     % p(q<0)=pi+p(q<0);
     % q(q<0)=-q(q<0);
     p(q<0)=0;
@@ -33,8 +32,8 @@ for ii=1:2
 
     if ii==1
         % dynamic one step ahead
-        xo = x*ones(L,1) + q.*cos(p)*dt;
-        yo = y*ones(L,1) + q.*sin(p)*dt;
+        xo = x*ones(Length_U,1) + q.*cos(p)*dt;
+        yo = y*ones(Length_U,1) + q.*sin(p)*dt;
         Xo(:,1:2) = [xo, yo];
     else
         Xo(:,3:4) = [p, q];
@@ -42,17 +41,17 @@ for ii=1:2
 end
 
 u1 = meshgrid(Uw,Ua);
-u1=reshape(u1',[L,1]);
+u1=reshape(u1',[Length_U,1]);
 u2 = meshgrid(Ua,Uw);
-u2=reshape(u2,[L,1]);
+u2=reshape(u2,[Length_U,1]);
 
 U=[u1 u2];
 
 % next state (2-step ahead)
-xo = x + v*cos(alpha)*dt;
-yo = y + v*sin(alpha)*dt;
-xoo = xo*ones(L,1) + q.*cos(p)*dt;
-yoo = yo*ones(L,1) + q.*sin(p)*dt; 
+xo = x + v*cos(theta)*dt;
+yo = y + v*sin(theta)*dt;
+xoo = xo*ones(Length_U,1) + q.*cos(p)*dt;
+yoo = yo*ones(Length_U,1) + q.*sin(p)*dt; 
 alphaoo = p+ U(:,1)*dt;
 voo = q+ U(:,2)*dt ;
 
@@ -115,8 +114,8 @@ Vs1(vf<0)=10000;
 %figure; plot(Vs1)
 
 r = -dt;
-Qh = (r*ones(L,1) - gamma* Vs1)'; % converting TTR to RL (NTTR)
-Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
+Qh = (r*ones(Length_U,1) - gamma* Vs1)'; % converting TTR to RL (NTTR)
+% Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
 
 end
 

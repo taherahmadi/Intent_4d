@@ -50,7 +50,7 @@ Xshow = X;
 G1 = [2.8771    3.0618    1.4000    0.0000];
 
 horizon = 2;
-n_part_g = 2; n_part_x=10;
+n_part_g = 50; n_part_x=50;
 xmin=0;
 xmax=+4;
 
@@ -255,37 +255,43 @@ for k=1:final_time
     
     
     % second approach particle filter for 2step prediction
-    [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),n_part_x,horizon,dt);
+    [xestsir, stdsir, xpartires, xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),n_part_x,horizon,dt);
     xp_old_pf = xpartires_1step;
     
     XP_pf(k,:) = xestsir;
     
     % combine Gg and past goal
     
-    Pg =reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[n_part_g,1]);
+    Pg = reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[n_part_g,1]);
 
     [xestsir,stdsir,xpartires]=pf_goal(G,Pg,g_particles,n_part_g,dt);
     %xpartires_total = xpartires;
     % choose the ng particles randomly
     G = xpartires;
+    G(1,:) = G1;
     g_parts_time_4plot(k,:) = xestsir;
     g_parts_satter_4plot(:,:,k) = G;
     
     % prediction    
-%     i = k;
-%     figure;
-%     title(i);
-%     hold on;plot(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),'b:','LineWidth',2);
-%     hold on;scatter(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),50,'bo','LineWidth',2);
-%     [delta_x_g, delta_y_g] = pol2cart(G(:,3),0.5);
-%     quiver(G(:,1),G(:,2),delta_x_g,delta_y_g,0,'linewidth',2, 'MaxHeadSize',1.5)
-%     hold on; scatter(G(:,1),G(:,2));
-%     hold on;plot(Xshow(1:i,1),Xshow(1:i,2),'r','LineWidth',2);
-%     hold on;scatter(Xshow(1:i,1),Xshow(1:i,2),50,'ro','LineWidth',2);
-%     hold on;
-%     [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(1:i,3),nstep_pred_states_mean(1:i,4)/5);
-%     quiver(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
-%     grid;
+    i = k;
+    figure;
+    title(i);
+    hold on;plot(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),'b:','LineWidth',2);
+    hold on;scatter(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),50,'bo','LineWidth',2);
+    %x particles
+    hold on; scatter(xpartires_1step(:,1),xpartires_1step(:,2));
+    
+    [delta_x_g, delta_y_g] = pol2cart(G(:,3),0.5);
+    quiver(G(:,1),G(:,2),delta_x_g,delta_y_g,0,'linewidth',2, 'MaxHeadSize',1.5)
+    hold on; scatter(G(:,1),G(:,2));
+    
+    hold on;plot(Xshow(1:i,1),Xshow(1:i,2),'r','LineWidth',2);
+    hold on;scatter(Xshow(1:i,1),Xshow(1:i,2),50,'ro','LineWidth',2);
+    hold on;
+    [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(1:i,3),nstep_pred_states_mean(1:i,4)/5);
+    quiver(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
+    hold on;
+    grid;
     
 end
 
@@ -330,20 +336,20 @@ subplot(224)
 plot(g_parts_time_4plot(:,4))
 ylabel('goal v')
 
+% 
+% figure;
+% subplot(211);plot(PBt(:,1))
+% title('Probability of Beta')
+% ylabel('Beta = 1')
+% subplot(212);plot(PBt(:,2))
+% ylabel('Beta = 10')
 
-figure;
-subplot(211);plot(PBt(:,1))
-title('Probability of Beta')
-ylabel('Beta = 1')
-subplot(212);plot(PBt(:,2))
-ylabel('Beta = 10')
-
-figure;
-subplot(211);plot(PGt(:,1))
-ylabel('gamma = 0.009')
-title('Probability of Gamma')
-subplot(212);plot(PGt(:,2))
-ylabel('gamma = 0.99')
+% figure;
+% subplot(211);plot(PGt(:,1))
+% ylabel('gamma = 0.009')
+% title('Probability of Gamma')
+% subplot(212);plot(PGt(:,2))
+% ylabel('gamma = 0.99')
 
 figure;
 subplot(311);plot(PWt(:,1))
@@ -351,8 +357,8 @@ ylabel('Goal 1 ')
 title('Goal Probability')
 subplot(312);plot(PWt(:,2))
 ylabel('Goal 2 ')
-subplot(313);plot(PWt(:,3))
-ylabel('Goal 3 ')
+% subplot(313);plot(PWt(:,3))
+% ylabel('Goal 3 ')
 % subplot(914);plot(PWt(:,4))
 % ylabel('Goal 4 ')
 % subplot(915);plot(PWt(:,5))
@@ -389,8 +395,8 @@ hold on;scatter(Xshow(:,1),Xshow(:,2),50,'ro','LineWidth',2);
 
 
 % prediction
-hold on;plot(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),'b:','LineWidth',2);
-hold on;scatter(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),50,'bo','LineWidth',2);
+hold on; plot(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),'b:','LineWidth',2);
+hold on; scatter(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),50,'bo','LineWidth',2);
 hold on; scatter(g_particles(:,1),g_particles(:,2));
 for i=1:final_time
     hold on;

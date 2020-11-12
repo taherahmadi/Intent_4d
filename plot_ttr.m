@@ -1,20 +1,46 @@
 close all;
-D1 = Min(1):dx(1):Max(1)
-D2 = Min(2):dx(2):Max(2)
-D3 = Min(3):dx(3):Max(3)
-D4 = Min(4):dx(4):Max(4)
+load('V.mat');
+load('xs.mat');
+dim = 4;
+Min = zeros(dim,1);
+Max = zeros(dim,1);
+Min(1) = -4;
+Min(2) = -4;
+Min(3) = 0; 
+Min(4) = -0.2; % we defined minimum v = -0.2 to be able to compute gradients
+Max(1) = 4;
+Max(2) = 4;
+Max(3) = 2*pi;
+Max(4) = 2.2;
+dx = [0.05; 0.05; 2*pi/20; 0.1];
 
+D1 = Min(1):dx(1):Max(1);
+D2 = Min(2):dx(2):Max(2);
+D3 = Min(3):dx(3):Max(3);
+D4 = Min(4):dx(4):Max(4);
+[xs N] = gridGeneration(dim, Min, Max, dx);
+N = size(phi);
+g = createGrid(Min, Max, N, 3);
+
+v_var = [2,  3,   4,  5,  6,  7,  8];
+colors= ['r','m','y','g','c','b','k'];
+ for v=v_var
+    visSetIm(g,phi(:,:,:,:),colors(find(v_var==v)),v);
+ end
+
+return
 %% X-Y
-for theta=[1]
+for theta=[7]
 %     for v=[1,2,3,4,5,6,8,10,12,14,16,21,24]
-      for v=1:25
+      for v=[7]
         contour(xs(:,:,1,10,1),xs(:,:,1,10,2),phi(:,:,theta,v), "ShowText", "on")
         xlabel('X')
         ylabel('Y')
         title(sprintf('theta=%0.2f v=%0.2f',D3(theta),D4(v)))
-        f = gcf;
+        pause(1);
+%         f = gcf;
         % Requires R2020a or later
-        exportgraphics(f,sprintf('plot_ttr/x_y/theta_%d_v_%d.png',theta,v))
+%         exportgraphics(f,sprintf('plot_ttr/x_y/theta_%d_v_%d.png',theta,v))
     end
 end
 %% X-V

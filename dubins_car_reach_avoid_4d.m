@@ -18,7 +18,7 @@ global obs_rad;
 global obs_v_min;
 
 a_upper = 1.5; a_lower = -1.5;
-omega_max = 0.5; % why 3? was 1
+omega_max = 1; 
 
 % target setting
 target_rad = 0.01;
@@ -117,4 +117,5 @@ contour(xs(:,:,1,10,1),xs(:,:,1,10,2),phi(:,:,1,10), "ShowText", "on")
 xlabel('X')
 ylabel('Y')
 save('V.mat','phi')
-    
+save('xs.mat','xs')
+
