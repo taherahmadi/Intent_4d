@@ -1,65 +1,30 @@
-% function [Qh,U ] = evaluateQ2(V,Min,Precision,X,Uw,Ua,dt,G,gamma)
-
-close all;
-clear all;
-load('V.mat');
-V = phi;
-dim = 4;
-Min = zeros(dim,1);
-Max = zeros(dim,1);
-Min(1) = -4;
-Min(2) = -4;
-Min(3) = 0; 
-Min(4) = -0.2; % we defined minimum v = -0.2 to be able to compute gradients
-Max(1) = 4;
-Max(2) = 4;
-Max(3) = 2*pi;
-Max(4) = 2.2;
-dx = [0.05; 0.05; 2*pi/20; 0.1];
-
-dt = 0.5;
-G = [3, 3, 0, 0];
-gamma = 1;
-
-
-init_X = [0,0,0,0];
-X = init_X;
-
-
-%% evlauteQ2(V,Min,Precision,X,Uw,Ua,dt,G,gamma)
+function [Qh,U ] = evaluateQ2(V,Min,Precision,X,Uw,Ua,dt,G,gamma)
 
 x = X(1);
 y = X(2);
 theta = X(3);
 v = X(4);
 
-
-
-Ua = -0.5:0.25:0.5;
-% Ua = -1.5:uPrecision(2):1.5;
-% Ua = [-1.7000   -0.5000    0   0.5000    1.5000]
-Uw = [0   pi/2    pi   3*pi/2];
-
-length_U=length(Uw)*length(Ua);
+Length_U=length(Uw)*length(Ua);
 for ii=1:2
     % dynamic
     if ii==1
-        thetao = theta- Uw'*dt;
+        alphao = theta- Uw'*dt;
         vo = v - Ua'*dt ;
     else
-        thetao = theta+ Uw'*dt;
+        alphao = theta+ Uw'*dt;
         vo = v + Ua'*dt ;
     end
-    
-    p = meshgrid(thetao,vo);
-    p=reshape(p',[length_U,1]);
-    q = meshgrid(vo,thetao);
-    q=reshape(q,[length_U,1]);
+
+    p = meshgrid(alphao,vo);
+    p=reshape(p',[Length_U,1]);
+    q = meshgrid(vo,alphao);
+    q=reshape(q,[Length_U,1]);
 
     % consider the human only moves along heading (no negative v,q)
     p(p>2*pi)=p(p>2*pi)-2*pi;
-%     p(p<0)=-p(p<0)+2*pi; incorrect?   
-    p(p<0)= p(p<0)+2*pi;
+    p(p<0)= p(p<0)+2*pi; 
+    
     % p(q<0)=pi+p(q<0);
     % q(q<0)=-q(q<0);
     p(q<0)=0;
@@ -67,8 +32,8 @@ for ii=1:2
 
     if ii==1
         % dynamic one step ahead
-        xo = x*ones(length_U,1) + q.*cos(p)*dt;
-        yo = y*ones(length_U,1) + q.*sin(p)*dt;
+        xo = x*ones(Length_U,1) + q.*cos(p)*dt;
+        yo = y*ones(Length_U,1) + q.*sin(p)*dt;
         Xo(:,1:2) = [xo, yo];
     else
         Xo(:,3:4) = [p, q];
@@ -76,17 +41,17 @@ for ii=1:2
 end
 
 u1 = meshgrid(Uw,Ua);
-u1=reshape(u1',[length_U,1]);
+u1=reshape(u1',[Length_U,1]);
 u2 = meshgrid(Ua,Uw);
-u2=reshape(u2,[length_U,1]);
+u2=reshape(u2,[Length_U,1]);
 
 U=[u1 u2];
 
 % next state (2-step ahead)
 xo = x + v*cos(theta)*dt;
 yo = y + v*sin(theta)*dt;
-xoo = xo*ones(length_U,1) + q.*cos(p)*dt;
-yoo = yo*ones(length_U,1) + q.*sin(p)*dt; 
+xoo = xo*ones(Length_U,1) + q.*cos(p)*dt;
+yoo = yo*ones(Length_U,1) + q.*sin(p)*dt; 
 alphaoo = p+ U(:,1)*dt;
 voo = q+ U(:,2)*dt ;
 
@@ -105,6 +70,18 @@ Xoo = [xoo,yoo,alphaoo,voo];
 % rdist = [1 1] - G(1:2); % considering (0,0) at origin
 % relative_dist = (rdist - Min(1:2))./Precision(1:2)';
 % Vs1 = V(int16(ind+[relative_dist 0 0]));
+dim = 4;
+Min = zeros(dim,1);
+Max = zeros(dim,1);
+Min(1) = -4;
+Min(2) = -4;
+Min(3) = 0;
+Min(4) = -0.2;
+Max(1) = 4;
+Max(2) = 4;
+Max(3) = 2*pi;
+Max(4) = 2.2;
+dx = [0.05; 0.05; 2*pi/20; 0.1];
 
 x1 = Min(1):dx(1):Max(1);
 x2 = Min(2):dx(2):Max(2);
@@ -121,7 +98,7 @@ Xo(:,2) = (Xor(2,:))';
 
 
 alf = Xo(:,3) ;
-alf(alf<0)=-alf(alf<0)+2*pi;
+alf(alf<0)=alf(alf<0)+2*pi;
 alf(alf>2*pi)=alf(alf>2*pi)-2*pi;
 vf = Xo(:,4) ;
 vf(vf<0)=-inf;
@@ -137,9 +114,8 @@ Vs1(vf<0)=10000;
 %figure; plot(Vs1)
 
 r = -dt;
-Qh = (r*ones(length_U,1) - gamma* Vs1)'; % converting TTR to RL (NTTR)
+Qh = (r*ones(Length_U,1) - gamma* Vs1)'; % converting TTR to RL (NTTR)
 % Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
 
-
-
+end
 

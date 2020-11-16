@@ -3,7 +3,7 @@ clear;clc;close all
 xPrecision = [0.1, 0.1, 2*pi/20,0.1];
 [x,y] = meshgrid(0:xPrecision(1):2);
 load('V.mat');
-Min = [0,0,0,0];
+Grid = xs;
 
 alpha = 0:xPrecision(4):2*pi;
 v = 0:xPrecision(3):2;
@@ -49,7 +49,7 @@ Xshow = X;
 
 G1 = [2.8771    3.0618    1.4000    0.0000];
 
-horizon = 2;
+horizon = 1;
 n_part_g = 50; n_part_x=50;
 xmin=0;
 xmax=+4;
@@ -62,7 +62,7 @@ len_u_comb=length(Uw)*length(Ua);
 Beta = [0.1; 10];
 Beta = [1]
 Gamma = [0.009 ;0.99];
-Gamma = [1]
+Gamma = [0.99]
 
 P_Beta = (1/size(Beta,1))*ones(size(Beta,1),1)';
 P_Gamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
@@ -90,6 +90,10 @@ PWt(1,:) = P_Goal;
 % First step set Goal equal to Gg
 G = g_particles;
 PXp = ones(size(Pu));
+% Min/Max/dx from V.mat
+
+
+
 for k=1:final_time
     
     % prediction of u before observation
@@ -99,7 +103,7 @@ for k=1:final_time
             gamma = Gamma(n);
             for i=1:size(G,1)
                % [Q,U] = evaluateQ(X(k,:),Uw,Ua,dt,G1,gamma);
-                [Q,U] = evaluateQ2(phi,Min,xPrecision,X(k,:),Uw,Ua,dt,G(i,:),gamma);
+                [Q,U] = evaluateQ2(phi,Grid,X(k,:),Uw,Ua,dt,G(i,:),gamma,horizon);
                 % i > m > n :MSB
                 %^P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
                 Pu(:,k,n,m,i) = evaluateP(Q,beta);

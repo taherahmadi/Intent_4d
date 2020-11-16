@@ -116,6 +116,6 @@ endTime = cputime;
 contour(xs(:,:,1,10,1),xs(:,:,1,10,2),phi(:,:,1,10), "ShowText", "on")
 xlabel('X')
 ylabel('Y')
-save('V.mat','phi')
-save('xs.mat','xs')
+save('V.mat','phi','xs')
+%save('xs.mat','xs')
 
