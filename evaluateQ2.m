@@ -13,10 +13,8 @@ U=[u1,u2];
 
 
     
-Xt1 = dynamic(X,u2,u1,dt);
-
-
-
+Xt1 = dynamic(X,u1,u2,dt);
+% Xt1 = dynamic(Xt1,u1,u2,dt);
 
 % n-step
 for i=2:horizon
@@ -28,7 +26,8 @@ end
 if horizon ==1
     Xtn = Xt1;
 end
-% apply the translation and rotation due to goal change
+
+%% apply the translation and rotation due to goal change
 Xtn(:,3) = Xtn(:,3)-G(3);
 % check rotation
 Xtn_rot = [cos(G(3)) sin(G(3));
@@ -38,24 +37,18 @@ Xtn(:,2) = (Xtn_rot(2,:))';
 
 
 thet = Xtn(:,3) ;
-thet(thet<0)=thet(thet<0)+2*pi;
-thet(thet>2*pi)=thet(thet>2*pi)-2*pi;
+thet(thet<-pi)=thet(thet<-pi)+2*pi;
+thet(thet>pi)=thet(thet>pi)-2*pi;
 Xtn(:,3) = thet;
 
-% discount V before (geometric series)
-
+%% discount V before (geometric series)
 x1 = Grid(:,:,:,:,1);
 x2 = Grid(:,:,:,:,2);
 x3 = Grid(:,:,:,:,3);
 x4 = Grid(:,:,:,:,4);
 
-
 TTR = interpn(x1, x2, x3, x4, V, Xtn(:,1), Xtn(:,2), Xtn(:,3), Xtn(:,4), 'nearest', 0);
-
-%figure; plot(Vs1)
-
-
-
+TTR(TTR==0)=100;
 r = -dt;
 V = r*ones(Length_U,1) - gamma*TTR;
 
@@ -64,7 +57,8 @@ if gamma < 1
 else
     Qh = V'; 
 end
-% Qh = -0*vecnorm([u1,u2]')- 0*abs(q')- gamma*sqrt((Xoo(:,1)-G(1)).^2+(Xoo(:,2)-G(2)).^2)';
+% G = [0,0,0,0];
+% Qh = - gamma*sqrt((Xt2(:,1)-G(1)).^2+(Xt2(:,2)-G(2)).^2)';
 
 end
 

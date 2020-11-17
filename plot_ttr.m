@@ -1,30 +1,32 @@
 close all;
 load('V.mat');
-load('xs.mat');
 dim = 4;
 Min = zeros(dim,1);
 Max = zeros(dim,1);
 Min(1) = -4;
 Min(2) = -4;
-Min(3) = 0; 
+Min(3) = -pi; 
 Min(4) = -0.2; % we defined minimum v = -0.2 to be able to compute gradients
 Max(1) = 4;
 Max(2) = 4;
-Max(3) = 2*pi;
+Max(3) = pi;
 Max(4) = 2.2;
+
+% dimension will be 81x81x20x25
 dx = [0.05; 0.05; 2*pi/20; 0.1];
 
 D1 = Min(1):dx(1):Max(1);
 D2 = Min(2):dx(2):Max(2);
 D3 = Min(3):dx(3):Max(3);
 D4 = Min(4):dx(4):Max(4);
-[xs N] = gridGeneration(dim, Min, Max, dx);
+
+% [xs N] = gridGeneration(dim, Min, Max, dx);
 N = size(phi);
 g = createGrid(Min, Max, N, 3);
 
-v_var = [2,  3,   4,  5,  6,  7,  8];
-colors= ['r','m','y','g','c','b','k'];
- for v=v_var
+v_var = [1, 2,  3,   4,  5,  6,  7,  8];
+colors= ['r', 'r','m','y','g','c','b','k'];
+ for v=6
     visSetIm(g,phi(:,:,:,:),colors(find(v_var==v)),v);
  end
 

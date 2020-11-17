@@ -1,56 +1,43 @@
 clear;clc;close all
 
-xPrecision = [0.1, 0.1, 2*pi/20,0.1];
-[x,y] = meshgrid(0:xPrecision(1):2);
 load('V.mat');
 Grid = xs;
 
-alpha = 0:xPrecision(4):2*pi;
-v = 0:xPrecision(3):2;
+xPrecision = [0.2, 0.2, 2*pi/15, 0.2];
 dt = 0.5;
-final_time = 10;
+final_time = 15;
 
 %% synthetic trajectory
+load('synthetic_trajectory.mat')
+
 % u
-w = [0.0;0.1;0.5;0.5;0.5;0.5;0.5;0.5;-0.1;-0.2];
-a = [0.1;1;1;1;0.5;0;-1;-1.5;-1;-0.2];
-% a = 1.5*ones(10,1)
-
-% reduced size of possible input
-% uPrecision = [0.5,5];
-uPrecision = [0.25, 1];
-
-Uw = -0.5:uPrecision(1):0.5;
+uPrecision = [0.5, 0.5];
+Uw = -1:uPrecision(1):1;
 Ua = -1.5:uPrecision(2):1.5;
-Ua = [-1.5000   -0.5000    0   0.5000    1.5000]
 
-% plot(x,y,'.')
-
+a = U_synth(:,1);
+w = U_synth(:,2);
 % Dynamic
 X0 = [0,0,0,0];
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
-Xshow(1,:) = discrete(X(1,:),xPrecision);
-for k=1:final_time
-X (k+1,:) = dynamic (X(k,:),a(k),w(k),dt);
-Xshow(k+1,:) = discrete(X(k+1,:),xPrecision);
+for k=1:final_time-1
+X (k+1,:) = dynamic (X(k,:),a(k+1),w(k+1),dt);
 end
 
 % ignore xshow
 Xshow = X;
-
-% hold on;scatter(Xshow(:,1),Xshow(:,2),'ro')
 % figure;
-
+% scatter(X(:,1),X(:,2),'ro');
 %% Goal (from PF)
 % [x,y,alpha,v]
 % G1 = [2,0.8,0,0];
 % G2 = [0,2,0,0];
 % G3 = [1,0,0,0];
 
-G1 = [2.8771    3.0618    1.4000    0.0000];
+G1 = G_synth;
 
 horizon = 1;
-n_part_g = 50; n_part_x=50;
+n_part_g = 50; n_part_x=10;
 xmin=0;
 xmax=+4;
 

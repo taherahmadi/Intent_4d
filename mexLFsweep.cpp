@@ -48,9 +48,9 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
             if (k == 0)
             {
                 p = (phi[i+1][j][k][h] - phi[i-1][j][k][h])/(2*dx[0]);  // dVx
-                q = (phi[i][j+1][k][h] - phi[i][j-1][k][h])/(2*dx[1]);  // dVz
-                r = (phi[i][j][k+1][h] - phi[i][j][N3-1][h])/(2*dx[2]); // dTheta
-                t = (phi[i][j][k][h+1] - phi[i][j][k][h-1])/(2*dx[3]);  // dvt
+                q = (phi[i][j+1][k][h] - phi[i][j-1][k][h])/(2*dx[1]);  // dVy
+                r = (phi[i][j][k+1][h] - phi[i][j][N3-1][h])/(2*dx[2]); // dVtheta
+                t = (phi[i][j][k][h+1] - phi[i][j][k][h-1])/(2*dx[3]);  // dVv
                 
                 if (obs_this > 0) {
                     if (t <= 0) { //TODO?
@@ -113,7 +113,7 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                     }
                 } else {
                     // Compute optimal control
-                    if (t >= 0) { //TODO?
+                     if (t >= 0) { //TODO?
                         a = a_lower;
                     } else { 
                         a = a_upper;
@@ -165,7 +165,7 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                     }
                 } else {
                 // Compute optimal control
-                    if (t >= 0) { //TODO?
+                     if (t >= 0) { //TODO?
                         a = a_lower;
                     } else { 
                         a = a_upper;
@@ -205,6 +205,7 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
             
             if (obs_this > 0) {
                 phi[i][j][k][h] = phiOld;
+//                 phi[i][j][k][h] = max(phiTemp/c, phiOld);
             }else{
                 phi[i][j][k][h] = min(phiTemp/c, phiOld);
             }
