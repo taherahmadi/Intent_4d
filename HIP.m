@@ -5,7 +5,7 @@ Grid = xs;
 
 xPrecision = [0.2, 0.2, 2*pi/15, 0.2];
 dt = 0.5;
-final_time = 15;
+final_time = 10;
 
 %% synthetic trajectory
 load('synthetic_trajectory.mat')
@@ -37,11 +37,11 @@ Xshow = X;
 G1 = G_synth;
 
 horizon = 1;
-n_part_g = 50; n_part_x=10;
+N_part_g =1; N_part_x=200;
 xmin=0;
 xmax=+4;
 
-g_particles=xmin+rand(n_part_g,4)*(xmax-xmin);
+g_particles=xmin+rand(N_part_g,4)*(xmax-xmin);
 g_particles(1,:) = G1;
 g_particles(:,4) = 0; % set goal-state velocities zero
 %% start
@@ -64,10 +64,10 @@ nstep_pred_states = zeros(len_u_comb,4,final_time);
 nstep_pred_states_mean = zeros(final_time, 4);
 
 g_parts_time_4plot = zeros(final_time, 4);
-g_parts_satter_4plot = zeros(n_part_g,4,final_time);
+g_parts_satter_4plot = zeros(N_part_g,4,final_time);
 
 XP_pf = zeros(final_time, 4);
-xp_old_pf = zeros(4, n_part_x);
+xp_old_pf = 0.01*randn(4, N_part_x);
 
 % showing results
 PBt(1,:) = P_Beta;
@@ -246,19 +246,20 @@ for k=1:final_time
     
     
     % second approach particle filter for 2step prediction
-    [xestsir, stdsir, xpartires, xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),n_part_x,horizon,dt);
+    [xestsir, stdsir, xpartires, xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),N_part_x,horizon,dt);
     xp_old_pf = xpartires_1step;
     
     XP_pf(k,:) = xestsir;
     
     % combine Gg and past goal
     
-    Pg = reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[n_part_g,1]);
+    Pg = reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[N_part_g,1]);
 
-    [xestsir,stdsir,xpartires]=pf_goal(G,Pg,g_particles,n_part_g,dt);
+    [xestsir,stdsir,xpartires]=pf_goal(G,Pg,g_particles,N_part_g,dt);
     %xpartires_total = xpartires;
     % choose the ng particles randomly
-    G = xpartires;
+    
+    %G = xpartires;
     G(1,:) = G1;
     g_parts_time_4plot(k,:) = xestsir;
     g_parts_satter_4plot(:,:,k) = G;
@@ -270,7 +271,7 @@ for k=1:final_time
     hold on;plot(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),'b:','LineWidth',2);
     hold on;scatter(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),50,'bo','LineWidth',2);
     %x particles
-    hold on; scatter(xpartires_1step(:,1),xpartires_1step(:,2));
+    hold on; scatter(xpartires_1step(1,:),xpartires_1step(2,:),'gd','filled', 'LineWidth' , 10);
     
     [delta_x_g, delta_y_g] = pol2cart(G(:,3),0.5);
     quiver(G(:,1),G(:,2),delta_x_g,delta_y_g,0,'linewidth',2, 'MaxHeadSize',1.5)
@@ -287,31 +288,31 @@ for k=1:final_time
 end
 
 time = 1:final_time;
-lables = strings(size(U,1), 1);
-for t=1:size(U,1)
-   lables(t,1) =  sprintf('%0.2f,%0.2f',U(t,1),U(t,2));
-end
+% lables = strings(size(U,1), 1);
+% for t=1:size(U,1)
+%    lables(t,1) =  sprintf('%0.2f,%0.2f',U(t,1),U(t,2));
+% end
+% 
+% p_u_a_t = PXt1';
+% for t=time
+%     figure;
+%     plot(p_u_a_t(:,t))
+%     hold on; bar(idx_real_u(t),max(p_u_a_t(:,t)),'red');
+%     labels=1:25;
+%     xticks(1:25)
+%     xticklabels(lables)
+% end
 
-p_u_a_t = PXt1';
-for t=time
-    figure;
-    plot(p_u_a_t(:,t))
-    hold on; bar(idx_real_u(t),max(p_u_a_t(:,t)),'red');
-    labels=1:25;
-    xticks(1:25)
-    xticklabels(lables)
-end
-
-[~,i]=max(PXt1');
-ff=U(i,:);
-subplot(211);plot(ff(:,1));
-hold on; plot(w,'r');
-legend('max estimate','real');
-ylabel('action w');
-subplot(212);plot(ff(:,2));
-hold on; plot(a,'r');
-ylabel('action a');
-xlabel('Time(Sec)');
+% [~,i]=max(PXt1');
+% ff=U(i,:);
+% subplot(211);plot(ff(:,1));
+% hold on; plot(w,'r');
+% legend('max estimate','real');
+% ylabel('action w');
+% subplot(212);plot(ff(:,2));
+% hold on; plot(a,'r');
+% ylabel('action a');
+% xlabel('Time(Sec)');
 
 figure;
 subplot(221)
@@ -379,22 +380,7 @@ ylabel('Goal 2 ')
 % newmap(zpos,:) = [1 1 1];        %set that position to white
 % colormap(newmap); 
 % end
-figure;
-view(2);
-hold on;plot(Xshow(:,1),Xshow(:,2),'r','LineWidth',2);
-hold on;scatter(Xshow(:,1),Xshow(:,2),50,'ro','LineWidth',2);
 
-
-% prediction
-hold on; plot(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),'b:','LineWidth',2);
-hold on; scatter(nstep_pred_states_mean(:,1),nstep_pred_states_mean(:,2),50,'bo','LineWidth',2);
-hold on; scatter(g_particles(:,1),g_particles(:,2));
-for i=1:final_time
-    hold on;
-    [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(i,3),nstep_pred_states_mean(i,4)/5);
-    quiver(nstep_pred_states_mean(i,1),nstep_pred_states_mean(i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
-end
-grid;
 % hold on;scatter(G(1,1),G(1,2),50,'go','LineWidth',8);
 % text(G(1,1),G(1,2), 'G1', 'Fontsize', 10);
 % 
@@ -423,23 +409,23 @@ grid;
  hold on; plot([0;0;nstep_pred_states_mean(:,4)],'r:')
  hold on; plot([0;0; XP_pf(:,4)],'k-.')
 
-  time1 = repmat(time,[n_part_g,1]);
-   time1 = reshape(time1,[1,n_part_g*final_time]);
+  time1 = repmat(time,[N_part_g,1]);
+   time1 = reshape(time1,[1,N_part_g*final_time]);
  figure; % plot all goals in time
  subplot(221);
- scatter(time1,reshape(g_parts_satter_4plot(:,1,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+ scatter(time1,reshape(g_parts_satter_4plot(:,1,:),[1,N_part_g*final_time]),30,'go','LineWidth',8);
   hold on;scatter(time,(g_parts_time_4plot(:,1))',50,'k*','LineWidth',8);
   ylabel('x');
  subplot(222);
- scatter(time1,reshape(g_parts_satter_4plot(:,2,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+ scatter(time1,reshape(g_parts_satter_4plot(:,2,:),[1,N_part_g*final_time]),30,'go','LineWidth',8);
   hold on;scatter(time,(g_parts_time_4plot(:,2))',50,'k*','LineWidth',8);
   ylabel('y');
  subplot(223);
-  scatter(time1,reshape(g_parts_satter_4plot(:,3,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+  scatter(time1,reshape(g_parts_satter_4plot(:,3,:),[1,N_part_g*final_time]),30,'go','LineWidth',8);
   hold on;scatter(time,(g_parts_time_4plot(:,3))',50,'k*','LineWidth',8);
   ylabel('\theta');
  subplot(224);
- scatter(time1,reshape(g_parts_satter_4plot(:,4,:),[1,n_part_g*final_time]),30,'go','LineWidth',8);
+ scatter(time1,reshape(g_parts_satter_4plot(:,4,:),[1,N_part_g*final_time]),30,'go','LineWidth',8);
   hold on;scatter(time,(g_parts_time_4plot(:,4))',50,'k*','LineWidth',8);
   ylabel('v');
   

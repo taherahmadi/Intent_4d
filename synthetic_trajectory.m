@@ -11,7 +11,7 @@ Grid = xs;
 % phi = ttrValue_obs;
 
 dt = 0.5;
-G = [-5,-5,-pi/2,0];
+G = [3,3,0,0];
 gamma = 1;
 beta = 10;
 horizon = 1;
@@ -19,7 +19,7 @@ uPrecision = [0.5, 0.5];
 Uw = -1:uPrecision(1):1;
 Ua = -1.5:uPrecision(2):1.5;
 
-Tf =15;
+Tf =10;
 X = zeros(Tf,4);
 Umax = zeros(Tf,2);
 init_X = [0, 0, 0, 0];

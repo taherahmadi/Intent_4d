@@ -10,7 +10,7 @@ function [xestsir,stdsir,xpartires,xpartires_1step]=pf_x(X,xpartiold,U,prob, n_p
 
 Nparti=n_part_x; 
 Nparti1=1/Nparti;
-std_meas=(0.01); % standard deviation of the measurement errors
+std_meas=(2e-1); % standard deviation of the measurement errors
 
 stdmodel1=0.001; % standard deviation of the evolution model
 stdmodel2=0.001; % standard deviation of the evolution model
@@ -55,7 +55,7 @@ sampeled_u_idx = find(sum_probs>rand_idx);
 sampeled_u_idx = sampeled_u_idx(1);
 sampeled_u = U(sampeled_u_idx,:);
 
-x_onestep(:,i)=F*xpartiold(:,i)+[0;0;dt*sampeled_u(1);dt*sampeled_u(2)] +...
+x_onestep(:,i)=F*xpartiold(:,i)+[0;0;dt*sampeled_u(2);dt*sampeled_u(1)] +...
     randn*[stdmodel1;stdmodel2;stdmodel3;stdmodel4];
 
 %%%%%%%%%%%%%%%%%%%%
@@ -88,8 +88,8 @@ end
 % Weights %
 %%%%%%%%%%%%%%%%%%%%
 wparti(i)=exp(-((x_onestep(1,i)-meas(1))/std_meas)^2-((x_onestep(2,i)-meas(2))/std_meas)^2 ...
-            -((x_onestep(3,i)-meas(3))/std_meas)^2 -((x_onestep(4,i)-meas(4))/std_meas)^2);
-
+             -((x_onestep(3,i)-meas(3))/std_meas)^2 -((x_onestep(4,i)-meas(4))/std_meas)^2);
+        
 
 end
 
