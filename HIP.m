@@ -1,7 +1,8 @@
 clear;clc;close all
 
 load('V.mat');
-Grid = xs;
+phi = ttrValue_obs;
+Grid = xs_whole;
 
 xPrecision = [0.2, 0.2, 2*pi/15, 0.2];
 dt = 0.5;
@@ -343,12 +344,12 @@ ylabel('goal v')
 % subplot(212);plot(PGt(:,2))
 % ylabel('gamma = 0.99')
 
-figure;
-subplot(311);plot(PWt(:,1))
-ylabel('Goal 1 ')
-title('Goal Probability')
-subplot(312);plot(PWt(:,2))
-ylabel('Goal 2 ')
+% figure;
+% subplot(311);plot(PWt(:,1))
+% ylabel('Goal 1 ')
+% title('Goal Probability')
+% subplot(312);plot(PWt(:,2))
+% ylabel('Goal 2 ')
 % subplot(313);plot(PWt(:,3))
 % ylabel('Goal 3 ')
 % subplot(914);plot(PWt(:,4))

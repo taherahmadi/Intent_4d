@@ -51,15 +51,15 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                 q = (phi[i][j+1][k][h] - phi[i][j-1][k][h])/(2*dx[1]);  // dVy
                 r = (phi[i][j][k+1][h] - phi[i][j][N3-1][h])/(2*dx[2]); // dVtheta
                 t = (phi[i][j][k][h+1] - phi[i][j][k][h-1])/(2*dx[3]);  // dVv
-                
-                if (obs_this > 0) {
-                    if (t <= 0) { //TODO?
-                        a = 0;
-                    }
-                    // v = 0;
-                    // omega = 0;
-                    // d = 0;
-                } else {
+//                 
+//                 if (obs_this > 0) {
+//                     if (t <= 0) { //TODO?
+//                         a = 0;
+//                     }
+//                     // v = 0;
+//                     // omega = 0;
+//                     // d = 0;
+//                 } else {
                     // Compute optimal control
                     if (t >= 0) { //TODO?
                         a = a_lower;
@@ -71,7 +71,7 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                     } else { 
                         omega = omega_max;
                     }
-                }
+//                 }
 //                 sigma1 =  abs(-transDrag*xs[i][j][k][h][0]/m + T1*sin(xs[i][j][k][h][2])/m + T2*sin(xs[i][j][k][h][2])/m);
 //                 sigma2 =  abs(-grav - transDrag*xs[i][j][k][h][1]/m + T1*cos(xs[i][j][k][h][2])/m + T2*cos(xs[i][j][k][h][2])/m);
 //                 sigma3 =  abs(xs[i][j][k][h][3]);
@@ -107,11 +107,11 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                 r = (phi[i][j][0][h] - phi[i][j][k-1][h])/(2*dx[2]);
                 t = (phi[i][j][k][h+1] - phi[i][j][k][h-1])/(2*dx[3]);
                 
-                if (obs_this > 0) {
-                    if (t <= 0) { //TODO?
-                        a = 0;
-                    }
-                } else {
+//                 if (obs_this > 0) {
+//                     if (t <= 0) { //TODO?
+//                         a = 0;
+//                     }
+//                 } else {
                     // Compute optimal control
                      if (t >= 0) { //TODO?
                         a = a_lower;
@@ -123,7 +123,7 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                     } else { 
                         omega = omega_max;
                     }
-                }
+//                 }
                 
 //                 sigma1 =  abs(-transDrag*xs[i][j][k][h][0]/m + T1*sin(xs[i][j][k][h][2])/m + T2*sin(xs[i][j][k][h][2])/m);
 //                 sigma2 =  abs(-grav - transDrag*xs[i][j][k][h][1]/m + T1*cos(xs[i][j][k][h][2])/m + T2*cos(xs[i][j][k][h][2])/m);
@@ -159,11 +159,11 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                 r = (phi[i][j][k+1][h] - phi[i][j][k-1][h])/(2*dx[2]);
                 t = (phi[i][j][k][h+1] - phi[i][j][k][h-1])/(2*dx[3]);
                 
-                if (obs_this > 0) {
-                    if (t <= 0) { //TODO?
-                        a = 0;
-                    }
-                } else {
+//                 if (obs_this > 0) {
+//                     if (t <= 0) { //TODO?
+//                         a = 0;
+//                     }
+//                 } else {
                 // Compute optimal control
                      if (t >= 0) { //TODO?
                         a = a_lower;
@@ -175,8 +175,8 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
                     } else { 
                         omega = omega_max;
                     }
-                }
-                
+//                 }
+//                 
 //                 sigma1 =  abs(-transDrag*xs[i][j][k][h][0]/m + T1*sin(xs[i][j][k][h][2])/m + T2*sin(xs[i][j][k][h][2])/m);
 //                 sigma2 =  abs(-grav - transDrag*xs[i][j][k][h][1]/m + T1*cos(xs[i][j][k][h][2])/m + T2*cos(xs[i][j][k][h][2])/m);
 //                 sigma3 =  abs(xs[i][j][k][h][3]);
@@ -204,7 +204,7 @@ double sweepingLF(double**** phi, int N1, int N2, int N3, int N4, double***** xs
             }
             
             if (obs_this > 0) {
-                phi[i][j][k][h] = phiOld;
+                phi[i][j][k][h] = 100;
 //                 phi[i][j][k][h] = max(phiTemp/c, phiOld);
             }else{
                 phi[i][j][k][h] = min(phiTemp/c, phiOld);

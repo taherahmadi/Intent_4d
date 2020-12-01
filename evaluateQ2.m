@@ -1,21 +1,21 @@
-function [Qh,U ] = evaluateQ2(V,Grid,X,Uw,Ua,dt,G,gamma,horizon)
+function [Qh,U,Xtn_out ] = evaluateQ2(V,Grid,X,Uw,Ua,dt,G,gamma,horizon)
 
 
 Length_U=length(Uw)*length(Ua);
 
 
-u1 = meshgrid(Ua,Uw);
-u1=reshape(u1,[Length_U,1]);
-u2 = meshgrid(Uw,Ua);
-u2=reshape(u2',[Length_U,1]);
+ua = meshgrid(Ua,Uw);
+ua=reshape(ua',[Length_U,1]);
+uw = meshgrid(Uw,Ua);
+uw=reshape(uw,[Length_U,1]);
 
-U=[u1,u2];
+U=[uw,ua];
 
 
-    
-Xt1 = dynamic(X,u1,u2,dt);
+
+Xt1 = dynamic(X,ua,uw,dt);
 % Xt1 = dynamic(Xt1,u1,u2,dt);
-
+Xtn_out = Xt1;
 % n-step
 for i=2:horizon
    % HARD
