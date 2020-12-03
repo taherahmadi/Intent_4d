@@ -47,8 +47,8 @@ x2 = Grid(:,:,:,:,2);
 x3 = Grid(:,:,:,:,3);
 x4 = Grid(:,:,:,:,4);
 
-TTR = interpn(x1, x2, x3, x4, V, Xtn(:,1), Xtn(:,2), Xtn(:,3), Xtn(:,4), 'nearest', 0);
-TTR(TTR==0)=100;
+TTR = interpn(x1, x2, x3, x4, V, Xtn(:,1), Xtn(:,2), Xtn(:,3), Xtn(:,4), 'nearest', 100);
+% TTR(TTR==0)=100;
 r = -dt;
 V = r*ones(Length_U,1) - gamma*TTR;
 

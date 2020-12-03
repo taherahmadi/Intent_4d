@@ -45,8 +45,8 @@ Max(2) = 8;
 Max(3) = pi;
 Max(4) = 2.2;
 
-% dimension will be 321   321    46    25
-dx = [0.1; 0.1; 2*pi/30; 0.05];
+% dimension will be  161   161    31    25
+dx = [0.1; 0.1; 2*pi/30; 0.1];
 
 [xs_whole N] = gridGeneration(dim, Min, Max, dx);
 
@@ -62,7 +62,7 @@ obs = 0*ones(N(1),N(2),N(3), N(4));
 % change to circle 
 flag = ((target_x - xs(:,:,:,:,1)).^2 + (target_y - xs(:,:,:,:,2)).^2) <= target_rad^2 &...
         abs(target_phi - xs(:,:,:,:,3)) <= target_rad &...
-        abs(xs(:,:,:,:,4)) <= target_rad; % TODO
+        abs(xs(:,:,:,:,4)) <= target_rad; % V constraint
 
 phi(flag) = 0;
 
