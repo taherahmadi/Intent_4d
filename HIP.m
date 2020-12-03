@@ -5,21 +5,21 @@ phi = ttrValue_obs;
 Grid = xs_whole;
 
 xPrecision = [0.2, 0.2, 2*pi/15, 0.2];
-dt = 0.5;
-final_time = 10;
+dt = 0.4;
+final_time = 20;
 
 %% synthetic trajectory
 load('synthetic_trajectory.mat')
 
 % u
 uPrecision = [0.5, 0.5];
-Uw = -1:uPrecision(1):1;
-Ua = -1.5:uPrecision(2):1.5;
+Ua = -1:uPrecision(1):1;
+Uw = -1.5:uPrecision(2):1.5;
 
-a = U_synth(:,1);
-w = U_synth(:,2);
+w = U_synth(:,1);
+a = U_synth(:,2);
 % Dynamic
-X0 = [0,0,0,0];
+X0 =  X_synth(1,:);
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
 for k=1:final_time-1
 X (k+1,:) = dynamic (X(k,:),a(k+1),w(k+1),dt);
@@ -38,7 +38,7 @@ Xshow = X;
 G1 = G_synth;
 
 horizon = 1;
-N_part_g =1; N_part_x=200;
+N_part_g =10; N_part_x=200;
 xmin=0;
 xmax=+4;
 
@@ -68,7 +68,7 @@ g_parts_time_4plot = zeros(final_time, 4);
 g_parts_satter_4plot = zeros(N_part_g,4,final_time);
 
 XP_pf = zeros(final_time, 4);
-xp_old_pf = 0.01*randn(4, N_part_x);
+xp_old_pf = (X0.*ones(N_part_x,4)+0.01*randn(N_part_x,4))';
 
 % showing results
 PBt(1,:) = P_Beta;
@@ -102,7 +102,7 @@ for k=1:final_time
 %     Pu(isnan(Pu)) = 0;
 %     Pu=Pu./sum(Pu,1);
     % update parameters after observing u
-    u = [w(k),a(k)];
+   % u = [w(k),a(k)]; %delete it
 %     ia = find(U(:,1)==w(k));
 %     ib = find(U(:,2)==a(k));
     % if the actual u is not in the control samples find nearest
@@ -119,17 +119,7 @@ for k=1:final_time
     idx_real_u(k) = ind; 
     
     
-    % update gamma
-    % Find the Q for the observed u (for debuging)
-    %[Q1,U1] = evaluateQ2(phi,Min,Precision,X(k,:),u(1),u(2),dt,G1,Gamma(1));
-    %[Q2,U2] = evaluateQ2(phi,Min,Precision,X(k,:),u(1),u(2),dt,G1,Gamma(2));
-    
-    % expected
-%     PP = [PBeta(1)*WG(1) PBeta(1)*WG(2) PBeta(2)*WG(1) PBeta(2)*WG(2)];
-%     Pu1 = sum([P(ind,k,1) P(ind,k,2) P(ind,k,3) P(ind,k,4)].*PP);
-%     Pu2 = sum([P(ind,k,5) P(ind,k,6) P(ind,k,7) P(ind,k,8)].*PP);
-%     PGamma(1) = PGamma(1)*Pu1/(PGamma(1)*Pu1+PGamma(2)*Pu2);
-%     PGamma(2) = PGamma(2)*Pu2/(PGamma(1)*Pu1+PGamma(2)*Pu2);
+
  
     PG = zeros(length(Gamma),1);
     for gamma=1:length(Gamma)
@@ -260,7 +250,7 @@ for k=1:final_time
     %xpartires_total = xpartires;
     % choose the ng particles randomly
     
-    %G = xpartires;
+    G = xpartires;
     G(1,:) = G1;
     g_parts_time_4plot(k,:) = xestsir;
     g_parts_satter_4plot(:,:,k) = G;
@@ -286,7 +276,29 @@ for k=1:final_time
     hold on;
     grid;
     
+    F(k) = getframe(gcf) ;
+    drawnow
+    
 end
+
+%% video saving
+
+% create the video writer with 1 fps
+  writerObj = VideoWriter('myVideo.avi');
+  writerObj.FrameRate = 10;
+  % set the seconds per image
+% open the video writer
+open(writerObj);
+% write the frames to the video
+for i=1:length(F)
+    % convert the image to a frame
+    frame = F(i) ;    
+    writeVideo(writerObj, frame);
+end
+% close the writer object
+close(writerObj);
+
+%% results
 
 time = 1:final_time;
 % lables = strings(size(U,1), 1);
@@ -430,5 +442,14 @@ ylabel('goal v')
   hold on;scatter(time,(g_parts_time_4plot(:,4))',50,'k*','LineWidth',8);
   ylabel('v');
   
-  
+norm(Xshow(:,1)-XP_pf(:,1))
+norm(Xshow(:,2)-XP_pf(:,2))
+norm(Xshow(:,3)-XP_pf(:,3))
+norm(Xshow(:,4)-XP_pf(:,4))
+
+
+norm(Xshow(:,1)-nstep_pred_states_mean(:,1))
+norm(Xshow(:,2)-nstep_pred_states_mean(:,2))
+norm(Xshow(:,3)-nstep_pred_states_mean(:,3))
+norm(Xshow(:,4)-nstep_pred_states_mean(:,4))
 

@@ -55,7 +55,7 @@ sampeled_u_idx = find(sum_probs>rand_idx);
 sampeled_u_idx = sampeled_u_idx(1);
 sampeled_u = U(sampeled_u_idx,:);
 
-x_onestep(:,i)=F*xpartiold(:,i)+[0;0;dt*sampeled_u(2);dt*sampeled_u(1)] +...
+x_onestep(:,i)=F*xpartiold(:,i)+[0;0;dt*sampeled_u(1);dt*sampeled_u(2)] +...
     randn*[stdmodel1;stdmodel2;stdmodel3;stdmodel4];
 
 %%%%%%%%%%%%%%%%%%%%
