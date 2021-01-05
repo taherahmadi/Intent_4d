@@ -1,7 +1,12 @@
 function [P] = evaluateP(Q,beta)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
-eps = 0.000001;
-P = exp(beta*Q)/(sum(exp(beta*Q))+eps);
+sm = sum(exp(beta*Q));
+
+if sm <eps
+    P = exp(beta*Q*0.01)/sum(exp(beta*Q*0.01));
+else
+    P = exp(beta*Q)/sm;
+end
 end
 

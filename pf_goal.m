@@ -10,13 +10,13 @@ function [xestsir,stdsir,xpartires]=pf_goal(xpartiold,prob,particle_set,n_part_g
 xpartiold =xpartiold';
 Nparti=n_part_g;
 Nparti1=1/Nparti;
-alpha = 0.1; % chance of choosing from fix particle set
+alpha = 0.05; % chance of choosing from fix particle set
 stdmeas=(0.1); % standard deviation of the measurement errors
 
 
-stdmodel1=0.1; % standard deviation of the evolution model
-stdmodel2=0.1; % standard deviation of the evolution model
-stdmodel3=0.1; % standard deviation of the evolution model
+stdmodel1=0.001; % standard deviation of the evolution model
+stdmodel2=0.001; % standard deviation of the evolution model
+stdmodel3=0.001; % standard deviation of the evolution model
 stdmodel4=0; % standard deviation of the evolution model
 
 

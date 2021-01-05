@@ -9,23 +9,23 @@ Grid = xs_whole;
 %%
 dt = 0.2;
 %%
-gamma = 1;
+gamma = 0.99;
 beta = 10;
 horizon = 1;
 uPrecision = [0.5, 0.5];
 Uw = -1.5:uPrecision(1):1.5;
 Ua = -1:uPrecision(2):1;
 %%
-Tf =50;
+Tf =20;
 
-G = [-3, -4,pi,0]; 
-for beta = 1:10
-for i = 1:10
+G = [0.5, 0,pi,0]; 
+for beta = 10:10
+for i = 1:1
 for theta=0
 X = zeros(Tf,4);
 Umax = zeros(Tf,2);
 
-init_X = [-5, 2, theta, 0];
+init_X = [2, 2, theta, 0];
 
 X(1,:) = init_X;
 Idx = 0;
@@ -45,9 +45,9 @@ for k=1:Tf
     Umax(k,:) = U(Idx,:);
     X(k+1,:) = dynamic (X(k,:),Umax(k,2),Umax(k,1),dt);
 
-    if((X(k,1)-G(1))^2 + (X(k,2)-G(2))^2 < 0.2)...
+    if((X(k,1)-G(1))^2 + (X(k,2)-G(2))^2 < 0.05)...
              &&((abs(X(k,3)-G(3)) < 4*pi/30)||(abs(abs(X(k,3)-G(3))-2*pi) < 4*pi/30))...
-             &&(abs(X(k,4)-G(4)) < 0.5)
+             &&(abs(X(k,4)-G(4)) < 0.3)
         break;
     end
 
@@ -105,13 +105,13 @@ hold on; plot(X(1:k,1),X(1:k,2),'Color',[1 1 1]-0.1*beta,'LineWidth',1);
 end
 end
 end
-% fig3 = figure(3);
+% fig3 = figure(beta);
 % fig_axes3 = axes('Parent',fig3);
 % grid on;
 % set(fig_axes3, 'XLim',[-8 8], 'YLim', [-8 8]);
 
 G_synth = G;
 U_synth = Umax;
-X_synth = X;
-save('synthetic_trajectory.mat', 'X_synth', 'U_synth', 'G_synth');
+X_synth = X(1:k,:);
+save('synthetic_trajectory.mat', 'X_synth', 'U_synth', 'G_synth','dt');
 

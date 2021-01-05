@@ -5,7 +5,7 @@ phi = ttrValue_obs;
 Grid = xs_whole;
 
 xPrecision = [0.2, 0.2, 2*pi/15, 0.2];
-dt = 0.4;
+dt = 0.2;
 final_time = 20;
 
 %% synthetic trajectory
@@ -38,19 +38,19 @@ Xshow = X;
 G1 = G_synth;
 
 horizon = 1;
-N_part_g =10; N_part_x=200;
+N_part_g =50; N_part_x=200;
 xmin=0;
 xmax=+4;
 
 g_particles=xmin+rand(N_part_g,4)*(xmax-xmin);
-g_particles(1,:) = G1;
+%g_particles(1,:) = G1;
 g_particles(:,4) = 0; % set goal-state velocities zero
 %% start
 len_u_comb=length(Uw)*length(Ua);
 Beta = [0.1; 10];
-Beta = [1]
-Gamma = [0.009 ;0.99];
-Gamma = [0.99]
+%Beta = [1]
+Gamma = [0.09 ;0.99];
+%Gamma = [0.99]
 
 P_Beta = (1/size(Beta,1))*ones(size(Beta,1),1)';
 P_Gamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
@@ -68,6 +68,7 @@ g_parts_time_4plot = zeros(final_time, 4);
 g_parts_satter_4plot = zeros(N_part_g,4,final_time);
 
 XP_pf = zeros(final_time, 4);
+XP_pf = X0;
 xp_old_pf = (X0.*ones(N_part_x,4)+0.01*randn(N_part_x,4))';
 
 % showing results
@@ -251,7 +252,7 @@ for k=1:final_time
     % choose the ng particles randomly
     
     G = xpartires;
-    G(1,:) = G1;
+    %G(1,:) = G1;
     g_parts_time_4plot(k,:) = xestsir;
     g_parts_satter_4plot(:,:,k) = G;
     
@@ -342,19 +343,19 @@ plot(g_parts_time_4plot(:,4))
 ylabel('goal v')
 
 % 
-% figure;
-% subplot(211);plot(PBt(:,1))
-% title('Probability of Beta')
-% ylabel('Beta = 1')
-% subplot(212);plot(PBt(:,2))
-% ylabel('Beta = 10')
+figure;
+subplot(211);plot(PBt(:,1))
+title('Probability of Beta')
+ylabel('Beta = 0.1')
+subplot(212);plot(PBt(:,2))
+ylabel('Beta = 10')
 
-% figure;
-% subplot(211);plot(PGt(:,1))
-% ylabel('gamma = 0.009')
-% title('Probability of Gamma')
-% subplot(212);plot(PGt(:,2))
-% ylabel('gamma = 0.99')
+figure;
+subplot(211);plot(PGt(:,1))
+ylabel('gamma = 0.09')
+title('Probability of Gamma')
+subplot(212);plot(PGt(:,2))
+ylabel('gamma = 0.99')
 
 % figure;
 % subplot(311);plot(PWt(:,1))
@@ -405,22 +406,22 @@ ylabel('goal v')
 
  figure;
  subplot(221);
-  plot(Xshow(:,1)) % check for v , theta
- hold on; plot([0;0;nstep_pred_states_mean(:,1)],'r:')
- hold on; plot([0;0; XP_pf(:,1)],'k-.')
+  plot(Xshow(:,1))
+ hold on; plot([X0(1);nstep_pred_states_mean(:,1)],'r:')
+ hold on; plot([X0(1); XP_pf(:,1)],'k-.')
  legend('ground truth','weighted average','pf')
   subplot(222);
   plot(Xshow(:,2))
- hold on; plot([0;0;nstep_pred_states_mean(:,2)],'r:')
- hold on; plot([0;0; XP_pf(:,2)],'k-.')
+ hold on; plot([X0(2);nstep_pred_states_mean(:,2)],'r:')
+ hold on; plot([X0(2); XP_pf(:,2)],'k-.')
   subplot(223);
   plot(Xshow(:,3))
- hold on; plot([0;0;nstep_pred_states_mean(:,3)],'r:')
- hold on; plot([0;0; XP_pf(:,3)],'k-.')
+ hold on; plot([X0(3);nstep_pred_states_mean(:,3)],'r:')
+ hold on; plot([X0(3); XP_pf(:,3)],'k-.')
   subplot(224);
  plot(Xshow(:,4))
- hold on; plot([0;0;nstep_pred_states_mean(:,4)],'r:')
- hold on; plot([0;0; XP_pf(:,4)],'k-.')
+ hold on; plot([X0(4);nstep_pred_states_mean(:,4)],'r:')
+ hold on; plot([X0(4); XP_pf(:,4)],'k-.')
 
   time1 = repmat(time,[N_part_g,1]);
    time1 = reshape(time1,[1,N_part_g*final_time]);
