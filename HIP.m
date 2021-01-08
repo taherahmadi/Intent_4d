@@ -38,19 +38,21 @@ Xshow = X;
 G1 = G_synth;
 
 horizon = 1;
-N_part_g =50; N_part_x=200;
-xmin=0;
-xmax=+4;
+N_part_g =100; N_part_x=200;
+
+xmin=floor(min(min(X(:,1)),min(X(:,2))));
+xmax=ceil(max(max(X(:,1)),max(X(:,2))));
 
 g_particles=xmin+rand(N_part_g,4)*(xmax-xmin);
+g_particles(:,3) = rand(N_part_g,1)*2*pi-pi;
 %g_particles(1,:) = G1;
 g_particles(:,4) = 0; % set goal-state velocities zero
 %% start
 len_u_comb=length(Uw)*length(Ua);
 Beta = [0.1; 10];
-%Beta = [1]
+Beta = [100]
 Gamma = [0.09 ;0.99];
-%Gamma = [0.99]
+Gamma = [0.99]
 
 P_Beta = (1/size(Beta,1))*ones(size(Beta,1),1)';
 P_Gamma = (1/size(Gamma,1))*ones(size(Gamma,1),1)';
@@ -277,27 +279,27 @@ for k=1:final_time
     hold on;
     grid;
     
-    F(k) = getframe(gcf) ;
-    drawnow
+%     F(k) = getframe(gcf) ;
+%     drawnow
     
 end
 
 %% video saving
 
-% create the video writer with 1 fps
-  writerObj = VideoWriter('myVideo.avi');
-  writerObj.FrameRate = 10;
-  % set the seconds per image
-% open the video writer
-open(writerObj);
-% write the frames to the video
-for i=1:length(F)
-    % convert the image to a frame
-    frame = F(i) ;    
-    writeVideo(writerObj, frame);
-end
-% close the writer object
-close(writerObj);
+% % create the video writer with 1 fps
+%   writerObj = VideoWriter('myVideo.avi');
+%   writerObj.FrameRate = 10;
+%   % set the seconds per image
+% % open the video writer
+% open(writerObj);
+% % write the frames to the video
+% for i=1:length(F)
+%     % convert the image to a frame
+%     frame = F(i) ;    
+%     writeVideo(writerObj, frame);
+% end
+% % close the writer object
+% close(writerObj);
 
 %% results
 
