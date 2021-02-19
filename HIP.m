@@ -21,8 +21,8 @@ a = U_synth(:,2);
 % Dynamic
 X0 =  X_synth(1,:);
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
-for k=1:final_time-1
-X (k+1,:) = dynamic (X(k,:),a(k+1),w(k+1),dt);
+for t_=1:final_time-1
+X (t_+1,:) = dynamic (X(t_,:),a(t_+1),w(t_+1),dt);
 end
 
 % ignore xshow
@@ -35,23 +35,26 @@ Xshow = X;
 % G2 = [0,2,0,0];
 % G3 = [1,0,0,0];
 
-G1 = G_synth;
+G1 = X_synth(final_time,:);
 
 horizon = 1;
-N_part_g =100; N_part_x=200;
+N_part_g =50; N_part_x=50;
 
-xmin=floor(min(min(X(:,1)),min(X(:,2))));
-xmax=ceil(max(max(X(:,1)),max(X(:,2))));
+xmin=floor(min(X(),[],'all'));
+xmax=ceil(max(X(),[],'all'));
 
 g_particles=xmin+rand(N_part_g,4)*(xmax-xmin);
 g_particles(:,3) = rand(N_part_g,1)*2*pi-pi;
-%g_particles(1,:) = G1;
+g_particles(1,:) = G1+rand(1,4)*0.1;
 g_particles(:,4) = 0; % set goal-state velocities zero
+g_particles(1:final_time,:) = X_synth(1:final_time,:)+rand(final_time,4)*0.1;
+g_particles(:,4) = 0; % set goal-state velocities zero
+
 %% start
 len_u_comb=length(Uw)*length(Ua);
-Beta = [0.1; 10];
+% Beta = [0.1; 10];
 Beta = [100]
-Gamma = [0.09 ;0.99];
+% Gamma = [0.09 ;0.99];
 Gamma = [0.99]
 
 P_Beta = (1/size(Beta,1))*ones(size(Beta,1),1)';
@@ -85,19 +88,19 @@ PXp = ones(size(Pu));
 
 
 
-for k=1:final_time
+for t_=1:final_time
     
     % prediction of u before observation
-    for m=1:length(Beta)
-        beta = Beta(m);
-        for n=1:length(Gamma)
-            gamma = Gamma(n);
-            for i=1:size(G,1)
+    for Beta_=1:length(Beta)
+        beta = Beta(Beta_);
+        for Gamma_=1:length(Gamma)
+            gamma = Gamma(Gamma_);
+            for G_=1:size(G,1)
                % [Q,U] = evaluateQ(X(k,:),Uw,Ua,dt,G1,gamma);
-                [Q,U] = evaluateQ2(phi,Grid,X(k,:),Uw,Ua,dt,G(i,:),gamma,horizon);
+                [Q,U,~] = evaluateQ2(phi,Grid,X(t_,:),Uw,Ua,dt,G(G_,:),gamma,horizon);
                 % i > m > n :MSB
                 %^P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
-                Pu(:,k,n,m,i) = evaluateP(Q,beta);
+                Pu(:,t_,Gamma_,Beta_,G_) = evaluateP(Q,beta);
             end
         end
     end
@@ -109,8 +112,8 @@ for k=1:final_time
 %     ia = find(U(:,1)==w(k));
 %     ib = find(U(:,2)==a(k));
     % if the actual u is not in the control samples find nearest
-    ia = find(min(abs(U(:,1)-w(k)))==abs(U(:,1)-w(k)));
-    ib = find(min(abs(U(:,2)-a(k)))==abs(U(:,2)-a(k)));
+    ia = find(min(abs(U(:,1)-w(t_)))==abs(U(:,1)-w(t_)));
+    ib = find(min(abs(U(:,2)-a(t_)))==abs(U(:,2)-a(t_)));
     
     for t=1:length(ia)
         aa=find(ib==ia(t));
@@ -119,14 +122,14 @@ for k=1:final_time
         end
     end
     ind = ib(aa);
-    idx_real_u(k) = ind; 
+    idx_real_u(t_) = ind; 
     
     
 
- 
+    %% belief Gamma
     PG = zeros(length(Gamma),1);
     for gamma=1:length(Gamma)
-        PG(gamma) = sum(sum(Pu(ind,k,gamma,:,:))); %+Pu(ind,k,gamma,2,1)+Pu(ind,k,gamma,1,2)+Pu(ind,k,gamma,2,2);
+        PG(gamma) = sum(sum(Pu(ind,t_,gamma,:,:))); %+Pu(ind,k,gamma,2,1)+Pu(ind,k,gamma,1,2)+Pu(ind,k,gamma,2,2);
         % filter role
         P_Gamma(gamma) = P_Gamma(gamma)*PG(gamma);
     end
@@ -135,9 +138,13 @@ for k=1:final_time
     SUM = sum(P_Gamma);
     P_Gamma = P_Gamma/SUM;
     
+    if isnan(P_Gamma)
+        a=100
+    end
+    
     for gamma=1:length(Gamma)
     
-        PGt(k+1,gamma) = P_Gamma(gamma);
+        PGt(t_+1,gamma) = P_Gamma(gamma);
     end
  
     % update beta
@@ -151,11 +158,12 @@ for k=1:final_time
 %     Pb2g2 = sum([P(ind,k,4) P(ind,k,8)].*[PGamma(1) PGamma(2)]*WG(2));
 %      sm = sum(PBeta.*[Pb1g1 P1g2 Pb2g1 Pb2g2]);
     
+%summation(Pu*p_gamma)
     Pbg = zeros(length(Beta) , size(G,1));    
     for goal=1:size(G,1)
         for beta=1:length(Beta)
             for gamma=1:length(Gamma)
-                Pbg(beta, goal) = Pbg(beta, goal) + Pu(ind,k,gamma,beta,goal)*P_Gamma(gamma);
+                Pbg(beta, goal) = Pbg(beta, goal) + Pu(ind,t_,gamma,beta,goal)*P_Gamma(gamma);
             end
         end
     end
@@ -164,6 +172,7 @@ for k=1:final_time
 %     Pb2g1 = P(ind,k,1,2,1)+P(ind,k,2,2,1);
 %     Pb2g2 = P(ind,k,1,2,2)+P(ind,k,2,2,2);
     
+    %% Belief Beta
     for beta=1:length(Beta)
         % filtering role
         P_Beta(beta) = P_Beta(beta)*sum(Pbg(beta,:));
@@ -178,13 +187,13 @@ for k=1:final_time
     sm = sum(P_Beta);
     P_Beta = P_Beta/sm;
   
-    
+ %%   
     % save purpose only
     for beta=1:length(Beta)
-        PBt(k+1,beta) = P_Beta(beta);
+        PBt(t_+1,beta) = P_Beta(beta);
     end
     
-    % update g
+    %% update goal
     for goal=1:size(P_Goal,1)
         P_Goal(goal) = P_Goal(goal)*sum(Pbg(:, goal));
     end
@@ -193,6 +202,7 @@ for k=1:final_time
     sm = sum(P_Goal);
     P_Goal = P_Goal./sm;
     
+    %%
 %     G(:,1:2) = G(:,1:2) .* PGoal 
 %     G(:,1:2) = xmin+G(:,1:2)*(xmax-xmin)
     
@@ -211,55 +221,63 @@ for k=1:final_time
     
     % save purpose only
     for goal=1:size(P_Goal,1)
-        PWt(k+1,goal) = P_Goal(goal);
+        PWt(t_+1,goal) = P_Goal(goal);
     end
     % new goal sampling from goal distribution
     
     % expected position in 2 step ahead (dynamic)
     % not biased :: learning rules of movement rather than dynamic
-    nstep_pred_states(:,:,k) = nstepdynamic(horizon,X(k,:),U(:,2),U(:,1),dt); %TODO
+    nstep_pred_states(:,:,t_) = nstepdynamic(horizon,X(t_,:),U(:,2),U(:,1),dt); %TODO
     Pt = ones(size(Gamma,1),size(Beta,1),size(G,1));
     for gamma=1:size(Gamma,1)
-        Pt(gamma,:,:) = Pt(gamma,:,:)*PGt(k+1,gamma);
+        Pt(gamma,:,:) = Pt(gamma,:,:)*PGt(t_+1,gamma);
     end    
     for beta=1:size(Beta,1)
-        Pt(:,beta,:) = Pt(:,beta,:)*PBt(k+1,beta);
+        Pt(:,beta,:) = Pt(:,beta,:)*PBt(t_+1,beta);
     end
     for goal=1:size(G,1)
-        Pt(:,:,goal) = Pt(:,:,goal)*PWt(k+1,goal);
+        Pt(:,:,goal) = Pt(:,:,goal)*PWt(t_+1,goal);
     end
-    
+   % counter
 %     PXp = ones(size(Pu));
     for jj =1:size(Pu,1)
-        PXp(jj,k,:,:,:) = Pt; 
+        PXp(jj,t_,:,:,:) = Pt; 
     end
-    PXp(:,k,:,:,:) = Pu(:,k,:,:,:).*PXp(:,k,:,:,:);
-    PXt1(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
-%     % Point estimate: average over all possibility
-    nstep_pred_states_mean(k,:) = PXt1(k,:)*nstep_pred_states(:,:,k);
+    PXp(:,t_,:,:,:) = Pu(:,t_,:,:,:).*PXp(:,t_,:,:,:);
+    PXt1(t_,:) =sum(sum(sum(PXp(:,t_,:,:,:),3),4),5);
+    if isnan(PXt1(t_,:))
+        a=100
+    end
+%     % Point estimate: average over all possibility- expected future state
+%% heat map n-step prediction
+    nstep_pred_states_mean(t_,:) = PXt1(t_,:)*nstep_pred_states(:,:,t_);
     
     
     % second approach particle filter for 2step prediction
-    [xestsir, stdsir, xpartires, xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),N_part_x,horizon,dt);
+    [xestsir, stdsir, xpartires, xpartires_1step]=pf_x(X(t_,:),xp_old_pf,U,PXt1(t_,:),N_part_x,horizon,dt);
     xp_old_pf = xpartires_1step;
     
-    XP_pf(k,:) = xestsir;
+    XP_pf(t_,:) = xestsir;
     
     % combine Gg and past goal
     
-    Pg = reshape(sum(sum(PXp(ind,k,:,:,:),3),4),[N_part_g,1]);
-
+    Pg = reshape(sum(sum(PXp(ind,t_,:,:,:),3),4),[N_part_g,1]);
+    Pg = Pg./sum(Pg); %Taher: Sum(Pg) not 1
+    
     [xestsir,stdsir,xpartires]=pf_goal(G,Pg,g_particles,N_part_g,dt);
     %xpartires_total = xpartires;
     % choose the ng particles randomly
     
     G = xpartires;
+%     G(1,:) = G1 + rand(1,4)*0.1;
+    G(1:final_time,:) = X_synth(1:final_time,:)+rand(final_time,4)*0.1;
+    
     %G(1,:) = G1;
-    g_parts_time_4plot(k,:) = xestsir;
-    g_parts_satter_4plot(:,:,k) = G;
+    g_parts_time_4plot(t_,:) = xestsir;
+    g_parts_satter_4plot(:,:,t_) = G;
     
     % prediction    
-    i = k;
+    i = t_;
     figure;
     title(i);
     hold on;plot(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),'b:','LineWidth',2);
@@ -270,6 +288,15 @@ for k=1:final_time
     [delta_x_g, delta_y_g] = pol2cart(G(:,3),0.5);
     quiver(G(:,1),G(:,2),delta_x_g,delta_y_g,0,'linewidth',2, 'MaxHeadSize',1.5)
     hold on; scatter(G(:,1),G(:,2));
+    hold on; axis([min(G(:,1))-1, max(G(:,1))+1, min(G(:,2))-1, max(G(:,2))+1]);
+    
+    for t_=1:length(G)
+        [Q,U,~,TTR] = evaluateQ2(phi,Grid,X(i,:),Uw,Ua,dt,G(t_,:),gamma(1),horizon);
+        text(G(t_,1),G(t_,2), num2str(TTR(ind)),'FontSize',14);
+        ttrs(t_) = TTR(ind); 
+        Qs(t_) = Q(ind);
+    end
+    
     
     hold on;plot(Xshow(1:i,1),Xshow(1:i,2),'r','LineWidth',2);
     hold on;scatter(Xshow(1:i,1),Xshow(1:i,2),50,'ro','LineWidth',2);
@@ -281,7 +308,15 @@ for k=1:final_time
     
 %     F(k) = getframe(gcf) ;
 %     drawnow
-    
+    figure(2);
+    plot(Pg)
+    title('Pg')
+    figure(3);
+    plot(ttrs)
+    title('TTR')
+    figure(4);
+    plot(Qs)
+    title('Q')
 end
 
 %% video saving

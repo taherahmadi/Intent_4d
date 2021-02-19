@@ -16,11 +16,11 @@ uPrecision = [0.5, 0.5];
 Uw = -1.5:uPrecision(1):1.5;
 Ua = -1:uPrecision(2):1;
 %%
-Tf =20;
+Tf =50;
 
 G = [0.5, 0,pi,0]; 
 for beta = 10:10
-for i = 1:1
+for i = 1:2
 for theta=0
 X = zeros(Tf,4);
 Umax = zeros(Tf,2);

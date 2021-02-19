@@ -9,4 +9,3 @@ else
     P = exp(beta*Q)/sm;
 end
 end
-

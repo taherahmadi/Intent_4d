@@ -1,4 +1,4 @@
-function [Qh,U,Xtn_out ] = evaluateQ2(V,Grid,X,Uw,Ua,dt,G,gamma,horizon)
+function [Qh,U,Xtn_out, TTR] = evaluateQ2(V,Grid,X,Uw,Ua,dt,G,gamma,horizon)
 
 
 Length_U=length(Uw)*length(Ua);
@@ -60,5 +60,11 @@ end
 % G = [0,0,0,0];
 % Qh = - gamma*sqrt((Xt2(:,1)-G(1)).^2+(Xt2(:,2)-G(2)).^2)';
 
+
+%plot
+% [X,Y] = meshgrid(Uw,Ua)
+% Z = reshape(Q',[5,7   ])
+% surf(X,Y,Z)
+%
 end
 
