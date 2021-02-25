@@ -61,6 +61,13 @@ g_particles(:,3) = rand(N_part_g,1)*2*pi-pi;
 g_particles(1,:) = G_synth;
 g_particles(:,4) = 0; % set goal-state velocities zero
 %g_particles(1,:) = [-.07 -1.8 -3*pi/4 0];
+
+%% heatmap meshgrid
+heatmap_percision = 0.0025;
+X_ = xmin:heatmap_percision:xmax;
+Y_ = xmin:heatmap_percision:xmax;
+[X_heatmap, Y_heatmap] = meshgrid(X_,Y_);
+V_heatmap = zeros(size(X_heatmap));
 %% start
 len_u_comb=length(Uw)*length(Ua);
 Beta = [0.1; 10];
@@ -253,7 +260,31 @@ for k=1:final_time
     PXt1(k,:) =sum(sum(sum(PXp(:,k,:,:,:),3),4),5);
 %     % Point estimate: average over all possibility
     nstep_pred_states_mean(k,:) = PXt1(k,:)*nstep_pred_states(:,:,k);
+%% heatmap instead of point estimate taher
+    points = nstep_pred_states(:,1:2,k);
+    w = PXt1(k,:)';
+    F = scatteredInterpolant(points,w);
     
+    x = min(points(:,1)):heatmap_percision:max(points(:,1));
+    y = min(points(:,2)):heatmap_percision:max(points(:,2));
+    
+    [Xq,Yq] = meshgrid(x,y);
+%     [Xq,Yq] = meshgrid(-2:0.125:2);
+    Vq = F(Xq,Yq);
+    
+    x0 = floor((x(1)-xmin)/heatmap_percision);
+    ind_x = x0:x0+length(x)-1;
+    y0 = floor((y(1)-xmin)/heatmap_percision);
+    ind_y = y0:y0+length(y)-1;
+    V_heatmap(ind_y, ind_x) = Vq;
+    figure(1);
+    surf(X_heatmap,Y_heatmap, V_heatmap);
+    shading interp
+    xlabel('X','fontweight','b'), ylabel('Y','fontweight','b');
+    zlabel('Value - V','fontweight','b');
+    view(2);
+    hold on; scatter3(Xshow(1,1),Xshow(1,2),0,50,'ro','LineWidth',2);
+    %%
     
     % second approach particle filter for 2step prediction
     [xestsir, stdsir, xpartires, xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),N_part_x,horizon,dt);
