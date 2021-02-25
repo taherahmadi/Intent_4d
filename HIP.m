@@ -16,8 +16,36 @@ uPrecision = [0.5, 0.5];
 Ua = -1:uPrecision(1):1;
 Uw = -1.5:uPrecision(2):1.5;
 
-w = U_synth(:,1);
+w = U_synth(:,1);%     for t_=1:length(G)
+%         [Q,U,~,TTR] = evaluateQ2(phi,Grid,X(i,:),Uw,Ua,dt,G(t_,:),gamma(1),horizon);
+%         text(G(t_,1),G(t_,2), num2str(t_)+": "+num2str(TTR(ind)),'FontSize',8);
+%         ttrs(t_) = TTR(ind); 
+%         Qs(t_) = Q(ind);
+%     end
+%     
+%     
+%     hold on;plot(Xshow(1:i,1),Xshow(1:i,2),'r','LineWidth',2);
+%     hold on;scatter(Xshow(1:i,1),Xshow(1:i,2),50,'ro','LineWidth',2);
+%     hold on;
+%     [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(1:i,3),nstep_pred_states_mean(1:i,4)/10);
+%     quiver(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),delta_x,delta_y,0,'linewidth',1, 'MaxHeadSize',0.5)
+%     hold on;
+%     grid;
+%     
+% %     F(k) = getframe(gcf) ;
+% %     drawnow
+%     figure(2);
+%     plot(Pg)
+%     title('Pg')
+%     figure(3);
+%     plot(ttrs)
+%     title('TTR')
+%     figure(4);
+%     plot(Qs)
+%     title('Q')
+
 a = U_synth(:,2);
+final_time = 20;
 % Dynamic
 X0 =  X_synth(1,:);
 X(1,:)  = dynamic (X0,a(1),w(1),dt);
@@ -47,8 +75,8 @@ g_particles=xmin+rand(N_part_g,4)*(xmax-xmin);
 g_particles(:,3) = rand(N_part_g,1)*2*pi-pi;
 g_particles(1,:) = G1+rand(1,4)*0.1;
 g_particles(:,4) = 0; % set goal-state velocities zero
-g_particles(1:final_time,:) = X_synth(1:final_time,:)+rand(final_time,4)*0.1;
-g_particles(:,4) = 0; % set goal-state velocities zero
+% g_particles(1:final_time,:) = X_synth(1:final_time,:)+rand(final_time,4)*0.1;
+% g_particles(:,4) = 0; % set goal-state velocities zero
 
 %% start
 len_u_comb=length(Uw)*length(Ua);
@@ -270,7 +298,7 @@ for t_=1:final_time
     
     G = xpartires;
 %     G(1,:) = G1 + rand(1,4)*0.1;
-    G(1:final_time,:) = X_synth(1:final_time,:)+rand(final_time,4)*0.1;
+%     G(1:final_time,:) = X_synth(1:final_time,:)+rand(final_time,4)*0.1;
     
     %G(1,:) = G1;
     g_parts_time_4plot(t_,:) = xestsir;
@@ -285,39 +313,39 @@ for t_=1:final_time
     %x particles
     hold on; scatter(xpartires_1step(1,:),xpartires_1step(2,:),'gd','filled', 'LineWidth' , 10);
     
-    [delta_x_g, delta_y_g] = pol2cart(G(:,3),0.5);
-    quiver(G(:,1),G(:,2),delta_x_g,delta_y_g,0,'linewidth',2, 'MaxHeadSize',1.5)
+    [delta_x_g, delta_y_g] = pol2cart(G(:,3),0.2);
+    quiver(G(:,1),G(:,2),delta_x_g,delta_y_g,0,'linewidth',1, 'MaxHeadSize',0.5)
     hold on; scatter(G(:,1),G(:,2));
     hold on; axis([min(G(:,1))-1, max(G(:,1))+1, min(G(:,2))-1, max(G(:,2))+1]);
     
-    for t_=1:length(G)
-        [Q,U,~,TTR] = evaluateQ2(phi,Grid,X(i,:),Uw,Ua,dt,G(t_,:),gamma(1),horizon);
-        text(G(t_,1),G(t_,2), num2str(TTR(ind)),'FontSize',14);
-        ttrs(t_) = TTR(ind); 
-        Qs(t_) = Q(ind);
+%     for t_=1:length(G)
+%         [Q,U,~,TTR] = evaluateQ2(phi,Grid,X(i,:),Uw,Ua,dt,G(t_,:),gamma(1),horizon);
+%         text(G(t_,1),G(t_,2), num2str(t_)+": "+num2str(TTR(ind)),'FontSize',8);
+%         ttrs(t_) = TTR(ind); 
+%         Qs(t_) = Q(ind);
+%     end
+%     
+%     
+%     hold on;plot(Xshow(1:i,1),Xshow(1:i,2),'r','LineWidth',2);
+%     hold on;scatter(Xshow(1:i,1),Xshow(1:i,2),50,'ro','LineWidth',2);
+%     hold on;
+%     [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(1:i,3),nstep_pred_states_mean(1:i,4)/10);
+%     quiver(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),delta_x,delta_y,0,'linewidth',1, 'MaxHeadSize',0.5)
+%     hold on;
+%     grid;
+%     
+% %     F(k) = getframe(gcf) ;
+% %     drawnow
+%     figure(2);
+%     plot(Pg)
+%     title('Pg')
+%     figure(3);
+%     plot(ttrs)
+%     title('TTR')
+%     figure(4);
+%     plot(Qs)
+%     title('Q')
     end
-    
-    
-    hold on;plot(Xshow(1:i,1),Xshow(1:i,2),'r','LineWidth',2);
-    hold on;scatter(Xshow(1:i,1),Xshow(1:i,2),50,'ro','LineWidth',2);
-    hold on;
-    [delta_x, delta_y] = pol2cart(nstep_pred_states_mean(1:i,3),nstep_pred_states_mean(1:i,4)/5);
-    quiver(nstep_pred_states_mean(1:i,1),nstep_pred_states_mean(1:i,2),delta_x,delta_y,0,'linewidth',2, 'MaxHeadSize',1.5)
-    hold on;
-    grid;
-    
-%     F(k) = getframe(gcf) ;
-%     drawnow
-    figure(2);
-    plot(Pg)
-    title('Pg')
-    figure(3);
-    plot(ttrs)
-    title('TTR')
-    figure(4);
-    plot(Qs)
-    title('Q')
-end
 
 %% video saving
 

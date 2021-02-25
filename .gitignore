@@ -4,3 +4,4 @@ results
 *.mexmaci64
 *.mat
 *.asv
+*result*
