@@ -1,17 +1,7 @@
-function [Qh,U,Xtn_out ] = evaluateQ2(V,Grid,X,Uw,Ua,dt,G,gamma,horizon)
-
-
-Length_U=length(Uw)*length(Ua);
-
-
-ua = meshgrid(Ua,Uw);
-ua=reshape(ua',[Length_U,1]);
-uw = meshgrid(Uw,Ua);
-uw=reshape(uw,[Length_U,1]);
-
-U=[uw,ua];
-
-
+function [Qh,U,Xtn_out ] = evaluateQ2(V,Grid,X,U,dt,G,gamma,horizon)
+uw  = U(:,1);
+ua = U(:,2);
+Length_U = length(U);
 
 Xt1 = dynamic(X,ua,uw,dt);
 % Xt1 = dynamic(Xt1,u1,u2,dt);

@@ -43,7 +43,7 @@ for k=1:Tf
     end
 
     Umax(k,:) = U(Idx,:);
-    X(k+1,:) = dynamic (X(k,:),Umax(k,2),Umax(k,1),dt);
+    X(k+1,:) = dynamic(X(k,:),Umax(k,2),Umax(k,1),dt);
 
     if((X(k,1)-G(1))^2 + (X(k,2)-G(2))^2 < 0.05)...
              &&((abs(X(k,3)-G(3)) < 4*pi/30)||(abs(abs(X(k,3)-G(3))-2*pi) < 4*pi/30))...

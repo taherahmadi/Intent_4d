@@ -11,12 +11,21 @@ uPrecision = [0.5, 0.5];
 Ua = -1:uPrecision(1):1;
 Uw = -1.5:uPrecision(2):1.5;
 
+Length_U=length(Uw)*length(Ua);
+ua = meshgrid(Ua,Uw);
+ua=reshape(ua',[Length_U,1]);
+uw = meshgrid(Uw,Ua);
+uw=reshape(uw,[Length_U,1]);
+
+U=[uw,ua];
+
 %% DATA
 load('synthetic_trajectory.mat')
 w = U_synth(:,1);
 a = U_synth(:,2);
 X0 =  X_synth(1,:);
 final_time = 20;
+horizon = 1;
 
 
 % load('realdata.mat')
@@ -50,7 +59,7 @@ Xshow = X;
 
 
 
-horizon = 1;
+
 N_part_g= 50/5; N_part_x=200;
 
 xmin=floor(min(min(X(:,1)),min(X(:,2))));
@@ -116,8 +125,7 @@ for k=1:final_time
         for n=1:length(Gamma)
             gamma = Gamma(n);
             for i=1:size(G,1)
-               % [Q,U] = evaluateQ(X(k,:),Uw,Ua,dt,G1,gamma);
-                [Q,U] = evaluateQ2(phi,Grid,X(k,:),Uw,Ua,dt,G(i,:),gamma,horizon);
+                [Q,U] = evaluateQ2(phi,Grid,X(k,:),U,dt,G(i,:),gamma,horizon);
                 % i > m > n :MSB
                 %^P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
                 Pu(:,k,n,m,i) = evaluateP(Q,beta);
@@ -240,7 +248,9 @@ for k=1:final_time
     
     % expected position in 2 step ahead (dynamic)
     % not biased :: learning rules of movement rather than dynamic
-    nstep_pred_states(:,:,k) = nstepdynamic(horizon,X(k,:),U(:,2),U(:,1),dt); %TODO
+    [~,idx] = sort(P_Goal)
+    G_ = G(idx(end-5:end),:)
+    [nstep_pred_states(:,:,k),~,~] = nstepdynamic(horizon,X(k,:),U(:,2),U(:,1),dt,U,G_,phi,Grid,gamma,beta); %TODO
     Pt = ones(size(Gamma,1),size(Beta,1),size(G,1));
     for gamma=1:size(Gamma,1)
         Pt(gamma,:,:) = Pt(gamma,:,:)*PGt(k+1,gamma);
@@ -276,16 +286,22 @@ for k=1:final_time
     ind_x = x0:x0+length(x)-1;
     y0 = floor((y(1)-xmin)/heatmap_percision);
     ind_y = y0:y0+length(y)-1;
-    V_heatmap(ind_y, ind_x) = Vq;
+%     V_heatmap = 0.7*V_heatmap;
+    V_heatmap = 0.3*imfilter(V_heatmap,fspecial('average',[50 50]));
+    V_heatmap(ind_y, ind_x) = V_heatmap(ind_y, ind_x) + Vq;
+    
+    
     figure(1);
     surf(X_heatmap,Y_heatmap, V_heatmap);
     shading interp
     xlabel('X','fontweight','b'), ylabel('Y','fontweight','b');
     zlabel('Value - V','fontweight','b');
     view(2);
-    hold on; scatter3(Xshow(1,1),Xshow(1,2),0,50,'ro','LineWidth',2);
+    hold on; scatter3(Xshow(k,1),Xshow(k,2),0,50,'ro','LineWidth',2);
     %%
-    
+    if k==9
+        asdasd =12
+    end
     % second approach particle filter for 2step prediction
     [xestsir, stdsir, xpartires, xpartires_1step]=pf_x(X(k,:),xp_old_pf,U,PXt1(k,:),N_part_x,horizon,dt);
     xp_old_pf = xpartires_1step;
