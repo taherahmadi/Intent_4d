@@ -125,7 +125,7 @@ for k=1:final_time
         for n=1:length(Gamma)
             gamma = Gamma(n);
             for i=1:size(G,1)
-                [Q,U] = evaluateQ2(phi,Grid,X(k,:),U,dt,G(i,:),gamma,horizon);
+                Q = evaluateQ2(phi,Grid,X(k,:),U,dt,G(i,:),gamma,horizon);
                 % i > m > n :MSB
                 %^P(:,k,4*(n-1)+2*(m-1)+i) = evaluateP(Q,beta); %P(:,k,n,m,i)
                 Pu(:,k,n,m,i) = evaluateP(Q,beta);
@@ -248,8 +248,8 @@ for k=1:final_time
     
     % expected position in 2 step ahead (dynamic)
     % not biased :: learning rules of movement rather than dynamic
-    [~,idx] = sort(P_Goal)
-    G_ = G(idx(end-5:end),:)
+    [~,idx] = sort(P_Goal);
+    G_ = G(idx(end-5:end),:);
     [nstep_pred_states(:,:,k),~,~] = nstepdynamic(horizon,X(k,:),U(:,2),U(:,1),dt,U,G_,phi,Grid,gamma,beta); %TODO
     Pt = ones(size(Gamma,1),size(Beta,1),size(G,1));
     for gamma=1:size(Gamma,1)
@@ -287,9 +287,9 @@ for k=1:final_time
     y0 = floor((y(1)-xmin)/heatmap_percision);
     ind_y = y0:y0+length(y)-1;
 %     V_heatmap = 0.7*V_heatmap;
-    V_heatmap = 0.3*imfilter(V_heatmap,fspecial('average',[50 50]));
+    V_heatmap = 0.7*imfilter(V_heatmap,fspecial('average',[50 50]));
     V_heatmap(ind_y, ind_x) = V_heatmap(ind_y, ind_x) + Vq;
-    
+    V_heatmap = V_heatmap/sum(V_heatmap,'all');
     
     figure(1);
     surf(X_heatmap,Y_heatmap, V_heatmap);

@@ -1,4 +1,4 @@
-function [Qh,U,Xtn_out ] = evaluateQ2(V,Grid,X,U,dt,G,gamma,horizon)
+function [Qh] = evaluateQ2(V,Grid,X,U,dt,G,gamma,horizon)
 uw  = U(:,1);
 ua = U(:,2);
 Length_U = length(U);
